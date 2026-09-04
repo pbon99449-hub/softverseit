@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="SoftVerse IT Institute: মুন্সীগঞ্জের সেরা কম্পিউটার ট্রেনিং সেন্টার। Computer Basic, Keds computer, IELTS Practice, Graphic Design এবং বেসিক কম্পিউটার কোর্সে ভর্তি চলছে। আজই যোগাযোগ করুন!">
+  <title>SoftVerse IT — কম্পিউটার ট্রেনিং সেন্টার</title>
+  <link rel="icon" type="image/png" href="./Images/favicon.webp">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" onload="this.rel='stylesheet'">
+
+  <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" as="style" onload="this.rel='stylesheet'">
+
+  <!-- ✅ Custom CSS -->
+    <link rel="stylesheet" href="./Css/style.css" onload="this.rel='stylesheet'">
+</head>
+<body>
+
+<!-- Background Blobs -->
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div class="blob blob-3"></div>
+
+<!-- ════════════════════════════════════════
+     WELCOME MODAL
+════════════════════════════════════════ -->
+<div class="welcome-overlay" id="welcomeOverlay">
+  <div class="welcome-modal">
+    <button class="wm-close" id="wmClose">✕</button>
+    <div class="wm-banner">
+      <div class="wm-logo">
+        <img 
+            src="./Images/logo-flat.webp" 
+            alt="SoftVerse IT logo" 
+            fetchpriority="high" 
+            loading="eager"
+            width="200" 
+            height="50">
+      </div>
+      <div class="wm-badge"><span class="wm-badge-dot"></span><span id="wmBadgeTxt">ভর্তি চলছে এখনেই</span></div>
+     <div class="wm-headline" id="wmHeadline">40, 41 নাম্বার ব্যাচ<br/><span id="wmHeadlineSpan">এ ভর্তি চলছে</span></div>
+      <div class="wm-sub" id="wmSub">SoftVerse IT Training Center — ২০২৬</div>
+    </div>
+    <div class="wm-body">
+      <div class="wm-batch-card">
+        <div class="wm-batch-title" id="wmBatchTitle">ব্যাচ বিস্তারিত</div>
+        <div class="wm-info-row" id="wmDate">শুরুর তারিখ: <strong>&nbsp;30 August , 2026</strong></div>
+        <div class="wm-info-row" id="wmTime">সময়: সকাল / বিকেল / সন্ধ্যা ব্যাচ</div>
+        <div class="wm-info-row" id="wmPlace">স্থান: মুন্সীগঞ্জ পুলিশ সুপার কার্যালয় বিপরীত পাশে</div>
+        <div class="wm-info-row" id="wmCourses">কোর্স: কম্পিউটার বেসিক, গ্রাফিক্স ডিজাইন, কিডস কম্পিউটার</div>
+      </div>
+      <button class="wm-btn-enroll" id="wmEnroll" aria-label="এখনই আসন নিশ্চিত করুন"><span id="wmEnrollTxt">এখনই আসন নিশ্চিত করুন →</span></button>
+      <button class="wm-btn-skip" id="wmSkip" aria-label="পরে দেখবো"><span id="wmSkipTxt">পরে দেখবো</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     ENROLL MODAL
+════════════════════════════════════════ -->
+<div class="modal-overlay" id="enrollModal">
+  <div class="modal">
+    <button class="modal-close" id="modalClose">✕</button>
+    <div id="formView">
+      <div class="modal-head" style="margin-bottom:1.8rem">
+        <h2 class="modal-title">ভর্তির আবেদন করুন</h2>
+        <p class="modal-sub">ফর্মটি পূরণ করুন, আমরা শীঘ্রই যোগাযোগ করবো।</p>
+      </div>
+      <form id="enrollForm" novalidate>
+        <div class="form-group">
+          <label for="fullName">নাম <span>*</span></label>
+          <input type="text" id="fullName" placeholder="আপনার পূর্ণ নাম লিখুন"/>
+          <div class="err-msg" id="err-fullName">নাম অবশ্যই লিখতে হবে।</div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="phone">মোবাইল নাম্বার <span>*</span></label>
+            <input type="tel" id="phone" placeholder="01X-XXXXXXXX"/>
+            <div class="err-msg" id="err-phone">সঠিক নাম্বার দিন।</div>
+          </div>
+          <div class="form-group">
+            <label for="age">বয়স</label>
+            <input type="number" id="age" placeholder="যেমন: ২২" min="11" max="99"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="course">কোর্স <span>*</span></label>
+          <select id="course">
+            <option value="">— কোর্স বেছে নিন —</option>
+            <option value="বেসিক কম্পিউটার">বেসিক কম্পিউটার</option>
+            <option value="কিডস কম্পিউটার">কিডস কম্পিউটার</option>
+            <option value="গ্রাফিক ডিজাইন">গ্রাফিক ডিজাইন</option>
+            <option value="স্কিল বুস্ট">স্কিল বুস্ট</option>
+            <option value="IELTS প্রেক্টিস">IELTS প্রেক্টিস</option>
+            <option value="ICT প্রেক্টিস">ICT প্রেক্টিস</option>
+          </select>
+          <div class="err-msg" id="err-course">একটি কোর্স বেছে নিন।</div>
+        </div>
+        <div class="form-group">
+          <label for="batch">ব্যাচ এর সময় <span>*</span></label>
+          <select id="batch">
+            <option value="">— সময় বেছে নিন —</option>
+            <option>সকাল (৯টা – ১১টা)</option>
+            <option>দুপুর (১১টা – ১টা)</option>
+            <option>বিকেল (১টা – ৩টা)</option>
+            <option>সন্ধ্যা (৩টা – ৫টা)</option>
+            <option>সন্ধ্যা (৫টা – ৭টা)</option>
+          </select>
+          <div class="err-msg" id="err-batch">ব্যাচ এর সময় বেছে নিন।</div>
+        </div>
+        <div class="form-group">
+          <label for="education">দিন বেছে নিন</label>
+          <select id="education">
+            <option value="">— বেছে নিন —</option>
+            <option>শনি-সোম-বুধ</option>
+            <option>রবি-মঙ্গল-বৃহ:স</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="message">বার্তা (ঐচ্ছিক)</label>
+          <textarea id="message" placeholder="যেকোনো প্রশ্ন লিখুন..."></textarea>
+        </div>
+        <button type="submit" class="btn-submit" id="submitBtn" aria-label="জমা দিন">
+          <span id="btnText">আবেদন জমা দিন →</span>
+          <span id="btnLoader" style="display:none">পাঠানো হচ্ছে...</span>
+        </button>
+        <p class="form-note">📞 সরাসরি কথা বলুন: <strong>01603-893912</strong></p>
+      </form>
+    </div>
+    <div class="modal-success" id="successView">
+      <div class="s-icon"><i class="fa-solid fa-circle-check"></i></div>
+      <h3>আবেদন সফল হয়েছে!</h3>
+      <p>আমাদের টিম শীঘ্রই আপনার সাথে যোগাযোগ করবে।</p>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     NAVBAR
+════════════════════════════════════════ -->
+<nav id="navbar">
+  <a class="nav-logo" href="#">
+    <div class="nav-logo-text">SOFTVERSE IT<span>Computer Training Center</span></div>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#courses">কোর্স</a></li>
+    <li><a href="#features">কেন আমরা</a></li>
+    <li><a href="#gallery">গ্যালারি</a></li>
+    <li><a href="#team">টিম</a></li>
+    <li><a href="#reviews">সাফল্য</a></li>
+    <li><a href="result.html">রেজাল্ট</a></li>
+    <li><a href="#contact">যোগাযোগ</a></li>
+  </ul>
+  <button class="btn-enroll-nav open-modal" aria-label="ভর্তি হন">ভর্তি হন →</button>
+  <a class="btn-admin-nav" data-admin-link href="/admin/login.html" aria-label="অ্যাডমিন প্যানেল" hidden>অ্যাডমিন প্যানেল</a>
+  <button class="hamburger" id="hamburger" aria-label="মেনু খুলুন"><span></span><span></span><span></span></button>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#courses">কোর্স</a>
+  <a href="#features">কেন আমরা</a>
+  <a href="#gallery">গ্যালারি</a>
+  <a href="#team">টিম</a>
+  <a href="#reviews">সাফল্য</a>
+  <a href="result.html">রেজাল্ট</a>
+  <a href="#contact">যোগাযোগ</a>
+  <a href="/admin/login.html" data-admin-link class="mob-admin" hidden>অ্যাডমিন প্যানেল ↖</a>
+  <button class="mob-enroll open-modal" aria-label="ভর্তি হন">ভর্তি হন →</button>
+</div>
+
+<!-- ── TICKER BAR ── -->
+<div class="ticker-bar">
+  <div class="ticker-track">
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     ANIMATED COURSE BANNER
+     — নিচের sv-slide div গুলো যত ইচ্ছা যোগ/বাদ দিতে পারবেন।
+     — প্রতিটার style="background-image:url('...')" এ নিজের ছবি বসান।
+     — ছবি না দিলে এমনিতেই একটা রঙিন gradient দেখাবে।
+     — শেষে আলাদা করে কোনো duplicate slide লাগবে না, script নিজেই সেটা সামলে নেয়।
+════════════════════════════════════════ -->
+<section class="sv-hero-banner" data-sv-banner>
+  <div class="sv-stage">
+    <div class="sv-frame">
+     <div class="sv-track" data-sv-track>
+        <div class="sv-slide" style="background-image:url('./Images/kids-computer1.webp'); background-position:center 45%;"><h3>কিডস কম্পিউটার</h3></div>
+        <div class="sv-slide" style="background-image:url('./Images/certificate-program.webp'); background-position:center 50%;"><h3>সার্টিফিকেট প্রদান</h3></div>
+        <div class="sv-slide" style="background-image:url('./Images/certi.webp'); background-position:center 70%;"><h3>সার্টিফিকেট প্রদান</h3></div>
+        <div class="sv-slide" style="background-image:url('./Images/hardware-training.webp'); background-position:center 30%;"><h3>হার্ডওয়্যার প্রশিক্ষণ</h3></div>
+        <div class="sv-slide" style="background-image:url('./Images/campaign-event.webp'); background-position:center 55%;"><h3>ক্যাম্পাস ক্যাম্পেইন</h3></div>
+        <div class="sv-slide" style="background-image:url('./Images/champion-award.webp'); background-position:center 55%;"><h3>ক্যাম্পাস ক্যাম্পেইন</h3></div>
+        <div class="sv-slide" style="background-image:url('./Images/computer-lab-1.webp'); background-position:center 45%;"><h3>আমাদের ল্যাব</h3></div>
+        <div class="sv-slide" style="background-image:url('./Images/computer-lab-2.webp'); background-position:center 50%;"><h3>আমাদের ল্যাব</h3></div>
+      </div>
+
+      <div class="sv-hook" data-sv-hook></div>
+      <div class="sv-rope-line" data-sv-ropeline></div>
+      <svg class="sv-throw-svg" viewBox="0 0 400 200" preserveAspectRatio="none">
+        <path data-sv-throwpath d="M315,150 Q248,8 330,75" fill="none" stroke="#f4b942" stroke-width="3" stroke-linecap="round"/>
+        <circle data-sv-ropeknot r="5" fill="#f4b942"/>
+      </svg>
+
+      <div class="sv-figure sv-flip" data-sv-figure>
+        <svg viewBox="0 0 36 54">
+          <g class="sv-body-group">
+            <circle cx="18" cy="7" r="6" fill="#eef6f2"/>
+            <line x1="18" y1="13" x2="18" y2="33" stroke="#eef6f2" stroke-width="3" stroke-linecap="round"/>
+
+            <line class="sv-arm1" x1="18" y1="16" x2="10" y2="26" stroke="#eef6f2" stroke-width="3" stroke-linecap="round"/>
+            <line class="sv-arm2" x1="18" y1="16" x2="27" y2="23" stroke="#f4b942" stroke-width="3" stroke-linecap="round"/>
+
+            <g class="sv-thigh sv-thigh2">
+              <line x1="18" y1="33" x2="18" y2="41" stroke="#eef6f2" stroke-width="3" stroke-linecap="round"/>
+              <g class="sv-shin sv-shin2">
+                <line x1="18" y1="41" x2="18" y2="52" stroke="#eef6f2" stroke-width="3" stroke-linecap="round"/>
+              </g>
+            </g>
+            <g class="sv-thigh sv-thigh1">
+              <line x1="18" y1="33" x2="18" y2="41" stroke="#c9d6cf" stroke-width="3" stroke-linecap="round"/>
+              <g class="sv-shin sv-shin1">
+                <line x1="18" y1="41" x2="18" y2="52" stroke="#c9d6cf" stroke-width="3" stroke-linecap="round"/>
+              </g>
+            </g>
+
+            <circle class="sv-sweat" cx="24" cy="4" r="1.6" fill="#7ec8e3"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="sv-dots" data-sv-dots></div>
+</section>
+
+<!-- ════════════════════════════════════════
+     HERO
+════════════════════════════════════════ -->
+<section class="hero">
+  <div class="hero-ring"></div>
+  <div class="live-chip"><span class="live-dot"></span> 30 july — নতুন ব্যাচ শুরু</div>
+  <h1>
+    <span class="h-line1"><span class="h-teal">ডিজিটাল</span> দক্ষতায়</span><br/>
+    <span class="h-grad">এগিয়ে যান</span><br/>
+    <span class="h-white">আত্মবিশ্বাসে</span>
+  </h1>
+  <p class="hero-desc">হাতে-কলমে শিক্ষা, অভিজ্ঞ প্রশিক্ষক এবং বাস্তবমুখী কারিকুলাম — আপনার ক্যারিয়ারকে নতুন উচ্চতায় নিয়ে যেতে SoftVerse IT প্রস্তুত।</p>
+  <div class="hero-btns">
+    <button class="hbtn-main open-modal" aria-label="এখনই ভর্তি হন">এখনই ভর্তি হন →</button>
+    <a href="#courses" class="hbtn-sec">কোর্স দেখুন</a>
+    <a href="result.html" class="hbtn-sec">রেজাল্ট দেখুন</a>
+  </div>
+  <div class="hero-trust">
+    <div class="trust-pill">সার্টিফিকেট প্রদান</div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     STATS
+════════════════════════════════════════ -->
+<div class="stats">
+  <div class="stat-box reveal"><div class="stat-n">৮০০+</div><div class="stat-l">সফল শিক্ষার্থী</div></div>
+  <div class="stat-box reveal reveal-d1"><div class="stat-n">৪+</div><div class="stat-l">প্রফেশনাল কোর্স</div></div>
+  <div class="stat-box reveal reveal-d2"><div class="stat-n">২+</div><div class="stat-l">বছরের অভিজ্ঞতা</div></div>
+  <div class="stat-box reveal reveal-d3"><div class="stat-n">৯৮%</div><div class="stat-l">শিক্ষার্থী সন্তুষ্টি</div></div>
+</div>
+
+<!-- ════════════════════════════════════════
+     COURSES
+════════════════════════════════════════ -->
+<section class="section" id="courses">
+    <div class="sec-header reveal">
+      <div class="sec-tag"><div class="tag-line"></div> কোর্সসমূহ <div class="tag-line"></div></div>
+      <div class="brand-sep"></div>
+      <h2 class="sec-title">আপনার পথ বেছে নিন</h2>
+      <p class="sec-desc">প্রতিটি কোর্স বাস্তবমুখী প্রজেক্ট ও অভিজ্ঞ প্রশিক্ষকদের তত্ত্বাবধানে পরিচালিত।</p>
+    </div>
+    <div class="courses-grid">
+
+    <div class="c-card reveal" data-id="basic" data-course="বেসিক কম্পিউটার" data-batch="সকাল (৯টা – ১১টা)" data-day="রবি-মঙ্গল-বৃহ:স">
+      <div class="c-status open">🟢 ভর্তি চলছে</div>
+      <div class="c-title">বেসিক কম্পিউটার</div>
+      <div class="c-body">MS Office, ইন্টারনেট, ফাইল ম্যানেজমেন্ট এবং ডিজিটাল লিটারেসির সম্পূর্ণ কোর্স।</div>
+      <div class="c-info">
+        <div class="c-info-row c-date">শুরু: ২৯ মার্চ, ২০২৬</div>
+        <div class="c-info-row c-time">সময়: সকাল / বিকেল / সন্ধ্যা</div>
+      </div>
+      <div class="c-footer"><span class="c-dur">৩ মাস</span><br><span class="c-level"> সপ্তাহে ৩ দিন ক্লাস</span></div>
+      <button class="course-enroll-btn" type="button" data-course="বেসিক কম্পিউটার" data-batch="সকাল (৯টা – ১১টা)" data-day="রবি-মঙ্গল-বৃহ:স">এখনই ভর্তি হন</button>
+    </div>
+
+    <div class="c-card reveal reveal-d1" data-id="kid" data-course="কিডস কম্পিউটার" data-batch="বিকেল (১টা – ৩টা)" data-day="শনি-সোম-বুধ">
+      <div class="c-status open">🟢 ভর্তি চলছে</div>
+      <div class="c-title">কিডস কম্পিউটার</div>
+      <div class="c-body">কম্পিউটার পরিচিতি, হার্ডওয়ার পরিচিতি, Ms Paint etc.</div>
+      <div class="c-info">
+        <div class="c-info-row c-date">শুরু: ০১ এপ্রিল, ২০২৬</div>
+        <div class="c-info-row c-time">সময়: বিকেল / সন্ধ্যা</div>
+      </div>
+      <div class="c-footer"><span class="c-dur">২ মাস</span><br><span class="c-level"> সপ্তাহে ৩ দিন ক্লাস</span></div>
+      <button class="course-enroll-btn" type="button" data-course="কিডস কম্পিউটার" data-batch="বিকেল (১টা – ৩টা)" data-day="শনি-সোম-বুধ">এখনই ভর্তি হন</button>
+    </div>
+
+    <div class="c-card reveal reveal-d2" data-id="graphic" data-course="গ্রাফিক ডিজাইন" data-batch="সন্ধ্যা (৩টা – ৫টা)" data-day="শনি-সোম-বুধ">
+      <div class="c-status open">🟢 ভর্তি চলছে</div>
+      <div class="c-title">গ্রাফিক ডিজাইন</div>
+      <div class="c-body">Photoshop, Illustrator, AI ও ব্র্যান্ড আইডেন্টিটি ডিজাইনের সম্পূর্ণ গাইড।</div>
+      <div class="c-info">
+        <div class="c-info-row c-date">শুরু: ২৯ মার্চ, ২০২৬</div>
+        <div class="c-info-row c-time">সময়: সকাল / বিকেল</div>
+      </div>
+      <div class="c-footer"><span class="c-dur">৩ মাস</span> <br> <span class="c-level"> সপ্তাহে ৩ দিন  ক্লাস</span></div>
+      <button class="course-enroll-btn" type="button" data-course="গ্রাফিক ডিজাইন" data-batch="সন্ধ্যা (৩টা – ৫টা)" data-day="শনি-সোম-বুধ">এখনই ভর্তি হন</button>
+    </div>
+
+    <div class="c-card reveal" data-id="skill-boost" data-course="স্কিল বুস্ট" data-batch="সন্ধ্যা (৫টা – ৭টা)" data-day="রবি-মঙ্গল-বৃহ:স">
+      <div class="c-status open">🟢 ভর্তি চলছে</div>
+      <div class="c-title">স্কিল বুস্ট</div>
+      <div class="c-body">MS Office, টাইপিং etc.</div>
+      <div class="c-info">
+        <div class="c-info-row c-date">শুরু: ০৫ এপ্রিল, ২০২৬</div>
+        <div class="c-info-row c-time">সময়: সন্ধ্যা</div>
+      </div>
+      <div class="c-footer"><span class="c-dur">১ মাস</span><br><span class="c-level"> সপ্তাহে ৭ দিন ক্লাস</span></div>
+      <button class="course-enroll-btn" type="button" data-course="স্কিল বুস্ট" data-batch="সন্ধ্যা (৫টা – ৭টা)" data-day="রবি-মঙ্গল-বৃহ:স">এখনই ভর্তি হন</button>
+    </div>
+
+    <div class="c-card reveal reveal-d1" data-id="ielts" data-course="IELTS প্রেক্টিস" data-batch="বিকেল (১টা – ৩টা)" data-day="শনি-সোম-বুধ">
+      <div class="c-status open">🟢 ভর্তি চলছে</div>
+      <div class="c-title">IELTS প্রেক্টিস</div>
+      <div class="c-body">টাইপিং, Software Practice</div>
+      <div class="c-info">
+        <div class="c-info-row c-date">শুরু: ০১ এপ্রিল, ২০২৬</div>
+        <div class="c-info-row c-time">সময়: বিকেল / সন্ধ্যা</div>
+      </div>
+      <div class="c-footer"><span class="c-dur">১ মাস</span><br><span class="c-level"> সপ্তাহে ৩ দিন ক্লাস</span></div>
+      <button class="course-enroll-btn" type="button" data-course="IELTS প্রেক্টিস" data-batch="বিকেল (১টা – ৩টা)" data-day="শনি-সোম-বুধ">এখনই ভর্তি হন</button>
+    </div>
+
+    <div class="c-card reveal reveal-d2" data-id="ict-practice" data-course="ICT প্রেক্টিস" data-batch="দুপুর (১১টা – ১টা)" data-day="রবি-মঙ্গল-বৃহ:স">
+      <div class="c-status open">🟢 ভর্তি চলছে</div>
+      <div class="c-title">ICT প্রেক্টিস</div>
+      <div class="c-body">HTML Advance, CSS, C Language, Projects</div>
+      <div class="c-info">
+        <div class="c-info-row c-date">শুরু: ০৫ এপ্রিল, ২০২৬</div>
+        <div class="c-info-row c-time">সময়: সকাল / বিকেল</div>
+      </div>
+      <div class="c-footer"><span class="c-dur">২ মাস</span><br><span class="c-level"> সপ্তাহে ৩ দিন ক্লাস</span></div>
+      <button class="course-enroll-btn" type="button" data-course="ICT প্রেক্টিস" data-batch="দুপুর (১১টা – ১টা)" data-day="রবি-মঙ্গল-বৃহ:স">এখনই ভর্তি হন</button>
+    </div>
+
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     FEATURES
+════════════════════════════════════════ -->
+<section class="feat-section" id="features">
+  <div class="sec-header reveal">
+    <div class="sec-tag"><div class="tag-line"></div> কেন আমরা <div class="tag-line"></div></div>
+    <div class="brand-sep"></div>
+    <h2 class="sec-title">আমাদের পার্থক্য কোথায়</h2>
+    <p class="sec-desc">সাধারণ ট্রেনিং সেন্টার নই — আমরা আপনার ক্যারিয়ার পার্টনার।</p>
+  </div>
+  <div class="feat-grid">
+    <div class="f-card reveal"><i class="fa-solid fa-award f-icon-wrap"></i><div class="f-title">স্বীকৃত সার্টিফিকেট</div><div class="f-desc"> সার্টিফিকেট </div></div>
+    <div class="f-card reveal reveal-d1"><i class="fa-solid fa-person-chalkboard f-icon-wrap"></i><div class="f-title">বিশেষজ্ঞ প্রশিক্ষক</div><div class="f-desc">ইন্ডাস্ট্রিতে ৩+ বছরের অভিজ্ঞতাসম্পন্ন প্রশিক্ষকদের কাছ থেকে শিখুন।</div></div>
+    <div class="f-card reveal reveal-d2"><i class="fa-regular fa-clock f-icon-wrap"></i><div class="f-title">নমনীয় সময়সূচি</div><div class="f-desc">সকাল, বিকেল ও সন্ধ্যা ব্যাচ — চাকরির পাশেও কোর্স করা যাবে।</div></div>
+    <div class="f-card reveal reveal-d3"><i class="fa-solid fa-briefcase f-icon-wrap"></i><div class="f-title">জব প্লেসমেন্ট</div><div class="f-desc">CV রিভিউ, মক ইন্টারভিউ </div></div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     PROCESS
+════════════════════════════════════════ -->
+<section class="section" id="process">
+  <div class="sec-header reveal">
+    <div class="sec-tag"><div class="tag-line"></div> ভর্তি প্রক্রিয়া <div class="tag-line"></div></div>
+    <div class="brand-sep"></div>
+    <h2 class="sec-title">মাত্র ৪টি ধাপে শুরু করুন</h2>
+  </div>
+  <div class="process-grid">
+    <div class="p-step reveal"><div class="p-num">০১</div><div class="p-label">পরামর্শ নিন</div><div class="p-sub">ফ্রি কাউন্সেলিং সেশনে আপনার লক্ষ্য নির্ধারণ করুন।</div></div>
+    <div class="p-step reveal reveal-d1"><div class="p-num">০২</div><div class="p-label">কোর্স বেছে নিন</div><div class="p-sub">আপনার সুবিধামতো কোর্স ও ব্যাচ সিলেক্ট করুন।</div></div>
+    <div class="p-step reveal reveal-d2"><div class="p-num">০৩</div><div class="p-label">শেখা শুরু করুন</div><div class="p-sub">ক্লাস, প্রজেক্ট ও প্র্যাকটিসে দক্ষ হয়ে উঠুন।</div></div>
+    <div class="p-step reveal reveal-d3"><div class="p-num">০৪</div><div class="p-label">ক্যারিয়ার গড়ুন</div><div class="p-sub">সার্টিফিকেট নিয়ে জব মার্কেটে প্রবেশ করুন।</div></div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     TESTIMONIALS — Auto Scroll
+════════════════════════════════════════ -->
+<section class="section" id="reviews" style="background:var(--bg2);border-top:1px solid var(--border);overflow:hidden">
+  <div class="sec-header reveal">
+    <div class="sec-tag"><div class="tag-line"></div> সাফল্যের গল্প <div class="tag-line"></div></div>
+    <div class="brand-sep"></div>
+    <h2 class="sec-title">শিক্ষার্থীরা যা বলেন</h2>
+  </div>
+
+  <div class="review-track-wrap">
+    <div class="review-track" id="reviewTrack">
+
+      <div class="t-card">
+        <div class="t-quote">"</div>
+        <div class="t-stars">★★★★★</div>
+        <p class="t-text">আমার মতে এই ৩ মাসে অনেক কিছু শিখতে পেরেছি। শুরুর দিকে অনেক ভালো লাগলেও শেষে অনেকটাই খারাপ লেগেছে । বিশেষভাবে আবিদ স্যার অনেকটাই সাহায্যকারী ছিল বাকিদেরটা তেমন ভালো লাগেনি । সামনে যারা এখানে আসবেন আমি মনে করি উপকৃত হবেন।</p>
+        <div class="t-author">
+          <div>
+            <div class="t-name">(ব্যাচ ২৫)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="t-card">
+        <div class="t-quote">"</div>
+        <div class="t-stars">★★★★★</div>
+        <p class="t-text">আবিদ স্যার ঠিক মত ক্লাসে আসে নাই ।
+            মারুফ স্যার অনেক ভালো ক্লাস করায় কিন্তু আবিদ স্যার বেশি ভালো ক্লাস করায় ।।</p>
+        <div class="t-author">
+          <div>
+            <div class="t-name">(ব্যাচ ২৫)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="t-card">
+        <div class="t-quote">"</div>
+        <div class="t-stars">★★★★★</div>
+        <p class="t-text">Softverse it এর শেখানোর ধরণ খুবই ভালো। সব স্যারদের ব্যবহার খুবই ভালো কিন্তু কৌশিক স্যার প্রশ্ন করলে বিরক্ত হয়। </p>
+        <div class="t-author">
+          <div>
+            <div class="t-name">(ব্যাচ ২৫)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="t-card">
+        <div class="t-quote">"</div>
+        <div class="t-stars">★★★★★</div>
+        <p class="t-text">Softverse it প্রতিষ্ঠানে খুব অল্প সময়ে ভালো কাজ শিখিয়েছে , কৌশিক স্যার অনেক ভালো করে এবং গুরুত্ব নিয়ে ক্লাস করিয়েছেন অন্য সব প্রতিষ্ঠান থেকে এই কম্পিউটার সেন্টারটি অনে ভালো অনেক সুন্দরভাবে ক্লাস করিয়েছেন এখানের পরিবেশ অনেক ভালো।</p>
+        <div class="t-author">
+          <div>
+            <div class="t-name">(ব্যাচ ২৭)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="t-card">
+        <div class="t-quote">"</div>
+        <div class="t-stars">★★★★★</div>
+        <p class="t-text">
+          স্যারদের ব্যবহার অনেক ভালো ছিল। তারা খুব ভালো ভাবে ক্লাসগুলো করিয়েছে। এই কয়দিনে অনেক কিছু শিখিয়েছেন। ধন্যবাদ স্যারদের।</p>
+        <div class="t-author">
+          <div>
+            <div class="t-name">(ব্যাচ ২৪)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="t-card">
+        <div class="t-quote">"</div>
+        <div class="t-stars">★★★★★</div>
+        <p class="t-text">শান্তিপূর্ণ পরিবেশে কম্পিউটার শিক্ষা নিয়েছি । Ms word, Excell, power points এর ব্যবহার শিখেছি । যা আমার ভবিষ্যতে বিভিন্নভাবে সাহায্য করবে ।</p>
+        <div class="t-author">
+          <div>
+            <div class="t-name">(ব্যাচ ২৩)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="t-card">
+        <div class="t-quote">"</div>
+        <div class="t-stars">★★★★★</div>
+        <p class="t-text">স্যতি বলতে আমি আমার প্রত্যাশার চেয়েও বেশি পেয়েছি । প্রতিটী টিচারের ব্যবহার অত্যন্ত বন্ধুসুলভ । তাদের সাথে ক্লাস করে অনেক ভালো লাগলো।</p>
+        <div class="t-author">
+          <div class="t-av">জি</div>
+          <div><div class="t-name">মোঃ জিসান শেখ</div><div class="t-role">(ব্যাচ ২৬)</div></div>
+        </div>
+      </div>
+
+      <div class="t-card">
+        <div class="t-quote">"</div>
+        <div class="t-stars">★★★★★</div>
+        <p class="t-text">আসলে এখানে আসার আগে আমার চিন্তা ভাবনা অন্য রকম ছিল । ভাবছিলাম হয়তো তেমন গুরুত্ব সহকারে শিখানো হয় না । কিন্তু এখানে আসারপর আমার ভাবনা সম্পূর্ণ পরিবর্তন হয়ে গিয়েছে । মুন্সিগঞ্জের মধ্যে বেস্ট একটা প্লার্টফর্ম Softverse it , এক কথাইয় অসাধারণ।
+        স্যাররা খুব ফ্রেন্ডলি, যার কারণে সবকিছু শিখতে আরো সহজ মনে হয়েছে । কেউ যদি আমাকে জিজ্ঞেস করে আমি বলবো তোমার জন্য উত্তম স্থান ।</p>
+        <div class="t-author">
+          <div>
+            <div class="t-name"> (ব্যাচ ২৭)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="t-card">
+        <div class="t-quote">"</div>
+        <div class="t-stars">★★★★★</div>
+        <p class="t-text">Softverse it তে ক্লাস করে আমার কম্পিউটার নিয়ে বেসিক ধারণা এসেছে । এখানে ক্লাসের পরিবেশ এবং শিক্ষক গণ যথেষ্ঠ ভালো।</p>
+        <div class="t-author">
+          <div class="t-av">রি</div>
+          <div><div class="t-name">রিয়াদ</div><div class="t-role">(ব্যাচ ২৬)</div></div>
+        </div>
+      </div>
+
+      <div class="t-card">
+        <div class="t-quote">"</div>
+        <div class="t-stars">★★★★★</div>
+        <p class="t-text">বোঝানো দক্ষতা চমৎকার ছিল। পরিবেশ শান্তিপূর্ণ ছিল। স্যারদের ব্যবহার ভালো ছিল । ক্লাসের সময়  আরো কিছক্ষণ বাড়িয়ে দিলে আমাদের জন্য সুবিধা হতো ।</p>
+        <div class="t-author">
+          <div>
+            <div class="t-name">Minha khatun</div>
+          </div>
+        </div>
+      </div>
+      <div class="t-card">
+        <div class="t-quote">"</div>
+        <div class="t-stars">★★★★★</div>
+        <p class="t-text">Softverse it এই প্রতিষ্ঠানে অনেক সহজেই বুঝতে পারি আর এখানকার যেই ভাইয়েরা আমাদের ক্লাস করাইয় তাদের ব্যবহার অনেক ভালো। </p>
+        <div class="t-author">
+          <div><div class="t-name">(Batch ২৭) </div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     VIDEOS
+════════════════════════════════════════ -->
+<section class="section" id="videos" style="background:var(--bg2);border-top:1px solid var(--border)">
+  <div class="sec-header reveal">
+    <div class="sec-tag"><div class="tag-line"></div> আমাদের ভিডিও <div class="tag-line"></div></div>
+    <div class="brand-sep"></div>
+    <h2 class="sec-title">শিক্ষার্থীদের রিভিউ ও প্রোগ্রামের ভিডিও</h2>
+    <p class="sec-desc">আমাদের ক্লাস, ব্যাচ ও বিশেষ অনুষ্ঠানের কিছু ভিডিও।</p>
+  </div>
+
+  <div class="video-grid reveal">
+
+    <div class="video-card">
+      <div class="video-wrap">
+        <div class="yt-lazy" data-vid="0VEmSzp7ZQQ">
+          <img 
+            src="https://img.youtube.com/vi/0VEmSzp7ZQQ/hqdefault.jpg" 
+            alt="softverse it Rap Song"
+            loading="lazy"
+          />
+          <div class="yt-play-btn">▶</div>
+        </div>
+
+      </div>
+      <div class="video-info">
+        <div class="video-title">Softverse It Rap Song</div>
+      </div>
+    </div>
+
+    <div class="video-card">
+      <div class="video-wrap">
+
+        <div class="yt-lazy" data-vid="PfhSGo4URak">
+          <img 
+            src="https://img.youtube.com/vi/PfhSGo4URak/maxresdefault.jpg" 
+            alt="Rivew Video"
+            loading="lazy"
+          />
+          <div class="yt-play-btn">▶</div>
+        </div>
+
+      </div>
+      <div class="video-info">
+        <div class="video-title">বেসিক কোর্স ব্যাচ</div>
+      </div>
+    </div>
+
+    <div class="video-card">
+      <div class="video-wrap">
+
+        <div class="yt-lazy" data-vid="t6I4sI1cZ-U">
+          <img 
+            src="https://img.youtube.com/vi/t6I4sI1cZ-U/maxresdefault.jpg" 
+            alt="Rivew Video"
+            loading="lazy"
+          />
+          <div class="yt-play-btn">▶</div>
+        </div>
+
+      </div>
+      <div class="video-info">
+        <div class="video-title">বেসিক কোর্স ব্যাচ</div>
+      </div>
+    </div>
+
+    <div class="video-card">
+      <div class="video-wrap">
+
+        <div class="yt-lazy" data-vid="0EVtuVKj_kw">
+          <img 
+            src="https://img.youtube.com/vi/0EVtuVKj_kw/maxresdefault.jpg" 
+            alt="Keds Video"
+            loading="lazy"
+          />
+          <div class="yt-play-btn">▶</div>
+        </div>
+
+      </div>
+      <div class="video-info">
+        <div class="video-title">ক্যাম্পেইন রিভিউ</div>
+      </div>
+    </div>
+
+    <div class="video-card">
+      <div class="video-wrap">
+
+        <div class="yt-lazy" data-vid="bTTGGaZbqfo">
+          <img 
+            src="https://img.youtube.com/vi/bTTGGaZbqfo/maxresdefault.jpg" 
+            alt="Add video"
+            loading="lazy"
+          />
+          <div class="yt-play-btn">▶</div>
+        </div>
+
+      </div>
+      <div class="video-info">
+        <div class="video-title">বাচ্চাদের কোর্স এর ভিডিও</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="text-align:center;margin-top:2.5rem" class="reveal">
+    <a href="https://www.youtube.com/@SoftverseITInstitute" target="_blank" class="btn-youtube">
+      ▶ আমাদের YouTube চ্যানেল দেখুন
+    </a>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     LIGHTBOX
+════════════════════════════════════════ -->
+<div class="lightbox-overlay" id="lightbox">
+  <button class="lb-close" id="lbClose" aria-label="cross">✕</button>
+  <button class="lb-nav lb-prev" id="lbPrev" aria-label="icon code">&#8249;</button>
+  <button class="lb-nav lb-next" id="lbNext" aria-label="icon code">&#8250;</button>
+  <div class="lb-img-wrap">
+    <div class="lb-placeholder" id="lbPlaceholder"><div class="lb-ph-icon" id="lbIcon">📸</div></div>
+    <img id="lbImg" src="" alt="" style="display:none"/>
+  </div>
+  <div id="lbCaption" class="lb-caption"></div>
+  <div id="lbCounter" class="lb-counter"></div>
+</div>
+
+<!-- ════════════════════════════════════════
+     GALLERY
+════════════════════════════════════════ -->
+<section class="gallery-section section" id="gallery">
+  <div class="sec-header reveal">
+    <div class="sec-tag"><div class="tag-line"></div> আমাদের মুহূর্ত <div class="tag-line"></div></div>
+    <div class="brand-sep"></div>
+    <h2 class="sec-title">ব্যাচ ও প্রোগ্রামের ছবি</h2>
+    <p class="sec-desc">শিক্ষার্থীদের ক্লাস, প্রজেক্ট ও বিশেষ অনুষ্ঠানের মুহূর্ত।</p>
+  </div>
+  <div class="gallery-tabs reveal">
+    <button class="g-tab active" data-filter="all" aria-label="All">সব</button>
+    <button class="g-tab" data-filter="batch" aria-label="Batch Picture">ব্যাচ ছবি</button>
+    <button class="g-tab" data-filter="program" aria-label="Program picture">প্রোগ্রাম</button>
+    <button class="g-tab" data-filter="graduation" aria-label="certificate">সার্টিফিকেট</button>
+  </div>
+  <div class="gallery-grid reveal" id="galleryGrid">
+
+    <div class="g-item" data-cat="batch" data-src="./Images/program pi/program4.webp" data-label="ক্লাস রুম 2" data-icon="📸">
+      <div class="g-placeholder">
+        <div class="ph-icon"><img src="./Images/program pi/program4.webp" alt="program picture" loading="lazy"></div>
+        <div class="ph-text">ব্যাচ ছবি ১</div>
+      </div>
+      <div class="g-overlay"><span class="g-label">ক্লাস রুম 2</span>
+      </div>
+      <div class="g-zoom-icon">🔍</div>
+    </div>
+
+    <div class="g-item" data-cat="program" data-src="./Images/program pi/campain.webp" data-label="কলেজ ক্যাম্পেইন" data-icon="🎓">
+      <div class="g-placeholder">
+        <div class="ph-icon"><img src="./Images/program pi/campain.webp" alt="campain picture" loading="lazy"></div>
+        <div class="ph-text">প্রোগ্রাম ছবি</div>
+      </div>
+      <div class="g-overlay"><span class="g-label">কলেজ ক্যাম্পেইন</span></div>
+      <div class="g-zoom-icon">🔍</div>
+    </div>
+
+    <div class="g-item" data-cat="program" data-src="./Images/program pi/campaign2.webp" data-label="কলেজ ক্যাম্পেইন" data-icon="🎓">
+      <div class="g-placeholder">
+        <div class="ph-icon"><img src="./Images/program pi/campaign2.webp" alt="campain picture" loading="lazy"></div>
+        <div class="ph-text">প্রোগ্রাম ছবি</div>
+      </div>
+      <div class="g-overlay"><span class="g-label">কলেজ ক্যাম্পেইন</span></div>
+      <div class="g-zoom-icon">🔍</div>
+    </div>
+
+    <div class="g-item" data-cat="batch" data-src="./Images/program pi/program3.webp" data-label="ক্লাস রুম 1" data-icon="💻">
+      <div class="g-placeholder">
+        <div class="ph-icon"><img src="./Images/program pi/program3.webp" alt="program picture" loading="lazy"></div>
+        <div class="ph-text">ক্লাস ছবি</div>
+      </div>
+      <div class="g-overlay"><span class="g-label">ক্লাস রুম 1</span></div>
+      <div class="g-zoom-icon">🔍</div>
+    </div>
+
+    <div class="g-item" data-cat="graduation" data-src="./Images/program pi/program.webp" data-label="সার্টিফিকেট অনুষ্ঠান" data-icon="🏆">
+      <div class="g-placeholder">
+        <div class="ph-icon"><img src="./Images/program pi/program.webp" alt="program picture" loading="lazy"></div>
+        <div class="ph-text">সার্টিফিকেট অনুষ্ঠান</div>
+      </div>
+      <div class="g-overlay"><span class="g-label">সার্টিফিকেট বিতরণ</span></div>
+      <div class="g-zoom-icon">🔍</div>
+    </div>
+
+    <div class="g-item" data-cat="program" data-src="./Images/program pi/program2.webp" data-label="সার্টিফিকেট অনুষ্ঠান" data-icon="🌐">
+      <div class="g-placeholder">
+        <div class="ph-icon"><img src="./Images/program pi/program2.webp" alt="program picture" loading="lazy"></div>
+        <div class="ph-text">সার্টিফিকেট অনুষ্ঠান</div>
+      </div>
+      <div class="g-zoom-icon">🔍</div>
+    </div>
+
+    <div class="g-item" data-cat="batch" data-src="./Images/program pi/program6.webp" data-label="সার্টিফিকেট অনুষ্ঠান" data-icon="🎨">
+      <div class="g-placeholder">
+        <div class="ph-icon"><img src="./Images/program pi/program6.webp" alt="program picture" loading="lazy"></div>
+        <div class="ph-text">সার্টিফিকেট অনুষ্ঠান</div>
+      </div>
+      <div class="g-overlay"><span class="g-label">সার্টিফিকেট অনুষ্ঠান</span></div>
+      <div class="g-zoom-icon">🔍</div>
+    </div>
+
+    <div class="g-item g-hidden" data-cat="batch" data-src="./Images/program pi/program7 (1).webp" data-label="সার্টিফিকেট অনুষ্ঠান" data-icon="🖥️">
+      <div class="g-placeholder">
+        <div class="ph-icon"><img src="./Images/program pi/program7 (1).webp" alt="program picture" loading="lazy"></div>
+        <div class="ph-text">সার্টিফিকেট অনুষ্ঠান</div>
+      </div>
+      <div class="g-overlay"><span class="g-label">সার্টিফিকেট অনুষ্ঠান</span></div>
+      <div class="g-zoom-icon">🔍</div>
+    </div>
+    <div class="g-item g-hidden" data-cat="graduation" data-src="./Images/program pi/program8.webp" data-label="সার্টিফিকেট অনুষ্ঠান" data-icon="🎓">
+      <div class="g-placeholder">
+        <div class="ph-icon"><img src="./Images/program pi/program8.webp" alt="program picture" loading="lazy"></div>
+        <div class="ph-text">সার্টিফিকেট অনুষ্ঠান</div>
+      </div>
+      <div class="g-overlay"><span class="g-label">সার্টিফিকেট অনুষ্ঠান</span></div>
+      <div class="g-zoom-icon">🔍</div>
+    </div>
+
+  </div>
+  <div style="text-align:center;margin-top:2.5rem" class="reveal">
+    <button class="btn-load-more" id="loadMoreBtn" aria-label="more Picture">
+      <span id="loadMoreText">আরও ছবি দেখুন</span>
+      <span id="loadMoreIcon">↓</span>
+    </button>
+    <p class="load-more-count" id="loadMoreCount"></p>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     TEAM
+════════════════════════════════════════ -->
+<section class="team-section" id="team">
+  <div class="sec-header reveal">
+    <div class="sec-tag"><div class="tag-line"></div> আমাদের টিম <div class="tag-line"></div></div>
+    <div class="brand-sep"></div>
+    <h2 class="sec-title">যাঁরা SoftVerse IT পরিচালনা করেন</h2>
+    <p class="sec-desc">অভিজ্ঞ নেতৃত্ব ও প্রশিক্ষক দল — যারা প্রতিদিন আপনার সাফল্যের জন্য কাজ করছেন।</p>
+  </div>
+
+<div class="team-dept-label reveal">সদ্য যোগদানকৃত টিচার</div>
+<div class="teacher-roster reveal" id="teacherRoster" style="display:flex;flex-wrap:wrap;gap:.75rem;margin:1rem 0 2rem"></div>
+
+<div class="team-dept-label reveal">নেতৃত্ব</div>
+
+<div class="advisor-row reveal">
+  <div class="team-card team-card-advisor">
+    <div class="team-img-wrap">
+      <div class="team-avatar-placeholder"><img src="./Images/mesu.webp" loading="lazy" alt="mishu picture"></div>
+    </div>
+    <div class="team-info">
+      <div class="team-badge advisor">Advisor</div>
+      <div class="team-name">Eng Md.Ashraful Islam Mishu</div>
+      <div class="team-role">Chief Advisor</div>
+      <div class="team-exp">প্রতিষ্ঠানের প্রধান উপদেষ্টা</div>
+      <div class="team-social"><a href="#">in</a><a href="https://www.facebook.com/AshrafulMishu2323" aria-label="Ashraful Islam Mishu">f</a></div>
+    </div>
+  </div>
+</div>
+
+<div class="team-grid reveal">
+  <div class="team-card">
+    <div class="team-img-wrap">
+      <div class="team-avatar-placeholder"><img src="./Images/maruf.webp" loading="lazy" alt="maruf picture"></div>
+    </div>
+    <div class="team-info">
+      <div class="team-badge ceo">CEO</div>
+      <div class="team-name">Maruf Hasan</div>
+      <div class="team-role">Chief Executive Officer</div>
+      <div class="team-exp">প্রতিষ্ঠানের প্রধান নির্বাহী কর্মকর্তা</div>
+      <div class="team-social"><a href="#">in</a><a href="https://www.facebook.com/md.marufhasan.142035" aria-label="Maruf Hasan">f</a></div>
+    </div>
+  </div>
+  <div class="team-card">
+    <div class="team-img-wrap">
+      <div class="team-avatar-placeholder"><img src="./Images/albi.webp" loading="lazy" alt="albi picture"></div>
+    </div>
+    <div class="team-info">
+      <div class="team-badge md">MD</div>
+      <div class="team-name">Nure Alam Alvi</div>
+      <div class="team-role">Managing Director</div>
+      <div class="team-exp">প্রতিষ্ঠানের ব্যবস্থাপনা পরিচালক</div>
+      <div class="team-social"><a href="#">in</a><a href="https://www.facebook.com/nuralam.alvi" aria-label="Nure Alam Alvi">f</a></div>
+    </div>
+  </div>
+  <div class="team-card">
+    <div class="team-img-wrap">
+      <div class="team-avatar-placeholder"><img src="./Images/shihav.webp" loading="lazy" alt="shihav picture"></div>
+    </div>
+    <div class="team-info">
+      <div class="team-badge ceo">AMD</div>
+      <div class="team-name">Md.Musfiqur Salahin</div>
+      <div class="team-role">Assistant Managing Director</div>
+      <div class="team-exp">প্রতিষ্ঠানের সহকারী ব্যবস্থাপনা পরিচালক</div>
+      <div class="team-social"><a href="#">in</a><a href="https://www.facebook.com/mashfic.sihab" aria-label="Musfiqur Salahin">f</a></div>
+    </div>
+  </div>
+  <div class="team-card">
+    <div class="team-img-wrap">
+      <div class="team-avatar-placeholder"><img src="./Images/rony (1).webp" loading="lazy" alt="rony picture"></div>
+    </div>
+    <div class="team-info">
+      <div class="team-badge cfo">CFO</div>
+      <div class="team-name">Md.Rony Hasan</div>
+      <div class="team-role">Chief Financial Officer</div>
+      <div class="team-exp">প্রধান আর্থিক কর্মকর্তা</div>
+      <div class="team-social"><a href="#">in</a><a href="https://www.facebook.com/mohammadronyhasan337" aria-label="Rony Hasan">f</a></div>
+    </div>
+  </div>
+  <div class="team-card">
+    <div class="team-img-wrap">
+      <div class="team-avatar-placeholder"><img src="./Images/niloy.webp" loading="lazy" alt="niloy picture"></div>
+    </div>
+    <div class="team-info">
+      <div class="team-badge cto">CTO</div>
+      <div class="team-name">Niloy Halder</div>
+      <div class="team-role">Chief Technology Officer</div>
+      <div class="team-exp">প্রধান প্রযুক্তি কর্মকর্তা</div>
+      <div class="team-social"><a href="https://www.behance.net/niloyrvi">B</a><a href="https://www.facebook.com/Niloyrvi7" aria-label="Niloy Haldar">f</a></div>
+    </div>
+  </div>
+</div>
+
+  <div class="team-dept-label reveal" style="margin-top:3rem"> প্রশিক্ষক</div>
+  <div class="team-grid reveal">
+    <div class="team-card">
+      <div class="team-img-wrap">
+        <div class="team-avatar-placeholder"><img src="./Images/abid.webp" loading="lazy" alt="abid picture"></div>
+      </div>
+      <div class="team-info">
+        <div class="team-badge tt">Head Trainer</div>
+        <div class="team-name">Abid Hasan</div>
+        <div class="team-role">Lead Trainer & Instructor</div>
+        <div class="team-exp">বেসিক কম্পিউটার</div>
+        <div class="team-social"><a href="#">in</a><a href="https://www.facebook.com/share/1EDpQPEgYu/?mibextid=wwXIfr" aria-label="Abid Hasan">f</a></div>
+      </div>
+    </div>
+    <div class="team-card">
+      <div class="team-img-wrap">
+        <div class="team-avatar-placeholder"><img src="./Images/arkka.webp" loading="lazy" alt="arkka picture"></div>
+      </div>
+      <div class="team-info">
+        <div class="team-badge tt">Head Trainer</div>
+        <div class="team-name">Prattikha Mondal Arkka</div>
+        <div class="team-role">Lead Trainer & Instructor</div>
+        <div class="team-exp">বেসিক কম্পিউটার</div>
+        <div class="team-social"><a href="#">in</a><a href="https://www.facebook.com/share/18ea5zfjZq/" aria-label="Prattikha Mondal Arkka">f</a></div>
+      </div>
+    </div>
+    <div class="team-card">
+      <div class="team-img-wrap">
+        <div class="team-avatar-placeholder"><img src="./Images/koushik.webp" loading="lazy" alt="kousik picture"></div>
+      </div>
+      <div class="team-info">
+        <div class="team-badge tt">Head Trainer</div>
+        <div class="team-name">Koushik Day</div>
+        <div class="team-role">Lead Trainer & Instructor</div>
+        <div class="team-exp">বেসিক কম্পিউটার</div>
+        <div class="team-social"><a href="#">in</a><a href="https://www.facebook.com/koushik.day.587" aria-label="Koushik Day">f</a></div>
+      </div>
+    </div>
+    <div class="team-card">
+      <div class="team-img-wrap">
+        <div class="team-avatar-placeholder"><img src="./Images/niloy.webp" loading="lazy" alt="niloy picture"></div>
+      </div>
+      <div class="team-info">
+        <div class="team-badge tt">Head Trainer</div>
+        <div class="team-name">Niloy Haldar</div>
+        <div class="team-role">Graphics Design</div>
+        <div class="team-exp">গ্রাফিক ডিজাইন</div>
+        <div class="team-social"><a href="#">in</a><a href="https://www.facebook.com/Niloyrvi7" aria-label="Niloy Haldar">f</a></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="team-dept-label reveal" style="margin-top:3rem">ব্যবস্থাপনা</div>
+  <div class="team-grid reveal">
+    <div class="team-card">
+      <div class="team-img-wrap">
+        <div class="team-avatar-placeholder"><img src="./Images/rifat.webp" loading="lazy" alt="rifat picture"></div>
+      </div>
+      <div class="team-info">
+        <div class="team-badge marketing">MM</div>
+        <div class="team-name">Rifat Bin Osman</div>
+        <div class="team-role">Marketing Manager</div>
+        <div class="team-exp">ডিজিটাল মার্কেটিং ও ব্র্যান্ড পরিচালনা</div>
+        <div class="team-social"><a href="#">in</a><a href="https://www.facebook.com/rifat.bin.osman.2025" aria-label="Rifat Bin Osman">f</a></div>
+      </div>
+    </div>
+    <div class="team-card">
+      <div class="team-img-wrap">
+        <div class="team-avatar-placeholder"><img src="./Images/nahiyan.webp" loading="lazy" alt="nahiyan picture"></div>
+      </div>
+      <div class="team-info">
+        <div class="team-badge coordinator">MM</div>
+        <div class="team-name">Nahean Al Azad</div>
+        <div class="team-role">Marketing Member</div>
+        <div class="team-exp">ভর্তি, সময়সূচি ও শিক্ষার্থী সহায়তা</div>
+        <div class="team-social"><a href="#">in</a><a href="https://www.facebook.com/nahyan.al.azad.2025" aria-label="Nahean Al Azad">f</a></div>
+      </div>
+    </div>
+    <div class="team-card">
+      <div class="team-img-wrap">
+        <div class="team-avatar-placeholder"><img src="./Images/dip.webp" loading="lazy" alt="dip picture"></div>
+      </div><div class="team-info">
+        <div class="team-badge hr">MM</div>
+        <div class="team-name">Dip Das</div>
+        <div class="team-role">Marketing Member</div>
+        <div class="team-exp">কর্মী ব্যবস্থাপনা ও ক্যারিয়ার সাপোর্ট</div>
+        <div class="team-social"><a href="#">in</a><a href="https://www.facebook.com/dip.d.a.s.1.1.1.1.0" aria-label="Dip Das">f</a></div>
+      </div>
+    </div>
+    <div class="team-card">
+      <div class="team-img-wrap">
+        <div class="team-avatar-placeholder"><img src="./Images/rafsan.webp" loading="lazy" alt="rafsan picture"></div>
+      </div><div class="team-info">
+        <div class="team-badge hr">MM</div>
+        <div class="team-name">Rafsan Sheikh</div>
+        <div class="team-role">Marketing Member</div>
+        <div class="team-exp">কর্মী ব্যবস্থাপনা ও ক্যারিয়ার সাপোর্ট</div>
+        <div class="team-social"><a href="#">in</a><a href="https://www.facebook.com/as.ajmahin" aria-label="Rafsan Sheikh">f</a></div>
+      </div>
+    </div>
+    <div class="team-card">
+      <div class="team-img-wrap">
+        <div class="team-avatar-placeholder"><img src="./Images/mahbop.webp" loading="lazy" alt="Mahbubur Rahman Chowdhury"></div>
+      </div><div class="team-info">
+        <div class="team-badge hr">MM</div>
+        <div class="team-name">Mahbubur Rahman Chowdhury</div>
+        <div class="team-role">Marketing Member</div>
+        <div class="team-exp">কর্মী ব্যবস্থাপনা ও ক্যারিয়ার সাপোর্ট</div>
+        <div class="team-social"><a href="#">in</a><a href="https://www.facebook.com/Mrpchow" aria-label="Rafsan Sheikh">f</a></div>
+      </div>
+    </div>
+    <div class="team-card">
+      <div class="team-img-wrap">
+        <div class="team-avatar-placeholder"><img src="./Images/iyafez png.webp" loading="lazy" alt="Yeafes Lite"></div>
+      </div><div class="team-info">
+        <div class="team-badge hr">MM</div>
+        <div class="team-name">Yeafes Lite</div>
+        <div class="team-role">Marketing Member</div>
+        <div class="team-exp">কর্মী ব্যবস্থাপনা ও ক্যারিয়ার সাপোর্ট</div>
+        <div class="team-social"><a href="#">in</a><a href="https://www.facebook.com/mahmudurrahman.yeafes" aria-label="Rafsan Sheikh">f</a></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="team-dept-label reveal" style="margin-top:3rem">ভিডিও ইডিটর</div>
+  <div class="team-grid reveal">
+    <div class="team-card">
+      <div class="team-img-wrap">
+        <div class="team-avatar-placeholder"><img src="./Images/raja.webp" loading="lazy" alt="raja picture"></div>
+      </div><div class="team-info">
+        <div class="team-badge hr">Seinor Editor</div>
+        <div class="team-name">Jaidul Islam Raja</div>
+        <div class="team-role">Vedio Editor</div>
+        <div class="team-social"><a href="#">in</a><a href="https://www.facebook.com/p.a.n.d.a.a.a.2310" aria-label="Jaidul Islam Raja">f</a></div>
+      </div>
+    </div>
+    <div class="team-card">
+      <div class="team-img-wrap">
+        <div class="team-avatar-placeholder"><img src="./Images/sadaf.webp" loading="lazy" alt="sadaf picture"></div>
+      </div><div class="team-info">
+        <div class="team-badge hr">Asistent Editor</div>
+        <div class="team-name">Sadaf Hasan</div>
+        <div class="team-role">Vedio Editor</div>
+        <div class="team-social"><a href="#">in</a><a href="https://www.facebook.com/SaaDuu.iykyk" aria-label="Sadaf Hasan">f</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     CTA
+════════════════════════════════════════ -->
+<div class="cta-wrap" id="contact">
+  <div class="cta-card">
+    <div class="cta-inner">
+      <h2>আজই <span>SoftVerse IT</span>-এ যোগ দিন</h2>
+      <p> ভর্তি চলছে তাই — দেরি না করে এখনই নিশ্চিত করুন।</p>
+      <div class="cta-btns">
+        <button class="hbtn-main open-modal" aria-label="submit addimission form">ভর্তির আবেদন করুন →</button>
+        <button class="hbtn-sec" aria-label="Number">📞 01603-893912</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════ -->
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">
+      <a class="footer-logo" href="#">
+        <div class="footer-logo-text">SoftVerse IT<span>Computer Training Center</span></div>
+      </a>
+      <p>বিশ্বস্ত কম্পিউটার ট্রেনিং সেন্টার। আমরা বিগত ২০২৩ সাল ২+ বছর  ধরে শত শিক্ষার্থীকে কম্পিউটার প্রশিক্ষন দিয়ে।</p>
+    </div>
+    <div class="footer-col">
+      <h3>কোর্স</h3>
+      <a href="#">বেসিক কম্পিউটার (৩ মাস)</a>
+      <a href="#">গ্রাফিক ডিজাইন (৩ মাস)</a>
+      <a href="#">স্কিল বুস্ট (১ মাস)</a>
+      <a href="#">IELTS প্রেক্টিস (১ মাস)</a>
+    </div>
+    <div class="footer-col">
+      <h3>আমাদের আরো কিছু পেইজ</h3>
+      <a href="https://www.facebook.com/share/18QPiHwUnt/?mibextid=wwXIfr">SV-Tech Zone</a>
+      <a href="https://www.facebook.com/share/1CVe7s24fR/?mibextid=wwXIfr">SV-Advanture</a>
+      <a href="#">Gift Managment</a>
+    </div>
+    <div class="footer-col">
+      <h3>যোগাযোগ</h3>
+      <a href="#"><i class="fa-solid fa-location-dot"></i> মুগন্সীঞ্জ পুলিশ সুপার কার্যালয় বিপরীত পাশে</a>
+      <a href="#"><i class="fa-solid fa-phone"></i> 01603-893912</a>
+      <a href="https://mail.google.com/mail/u/0/?tab=rm&ogbl#inbox?compose=new"><i class="fa-regular fa-envelope"></i> softversei@gmail.com</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 SoftVerse IT Computer Training Center।</p>
+    <div class="footer-socials">
+      <a class="social-btn" href="https://www.facebook.com/share/15eAhfq3ayS/?mibextid=wwXIfr">f</a>
+      <a class="social-btn" href="https://www.youtube.com/@SoftverseITInstitute">▶</a>
+    </div>
+  </div>
+  <div class="dev-credit">
+    <span>Developed by</span>
+    <a href="https://www.facebook.com/profile.php?id=61550697217853" class="dev-brand">
+      <strong>SOFTVERSE IT</strong>
+    </a>
+  </div>
+</footer>
+
+<!-- ✅ JavaScript -->
+<script src="./JS/main.js" defer></script>
+<!-- ভিজিট ট্র্যাকিং: প্রতি ব্রাউজার সেশনে দিনে একবার গণনা → অ্যাডমিন ড্যাশবোর্ডের চার্টে যায় -->
+<script>
+(function () {
+  try {
+    if (location.protocol === 'file:') return;
+    var key = 'sv_visit_counted_' + new Date().toISOString().slice(0, 10);
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, '1');
+    var body = JSON.stringify({ path: location.pathname });
+    function post(base) {
+      return fetch(base + '/api/visits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: body,
+        keepalive: true,
+      }).then(function (r) { return r.ok; }).catch(function () { return false; });
+    }
+    post('').then(function (ok) { if (!ok) post('http://localhost:5000'); });
+  } catch (_) {}
+})();
+</script>
+</body>
+</html>

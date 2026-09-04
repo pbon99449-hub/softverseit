@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ড্যাশবোর্ড — SoftVerse Admin</title>
+  <link rel="icon" type="image/png" href="../../Images/favicon.webp"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Syne:wght@700;800&display=swap"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+  <link rel="stylesheet" href="css/admin.css"/>
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="admin-shell" id="shell"></div>
+  <div id="toastHost"></div>
+  <script src="js/common.js?v=7"></script>
+  <script>
+    if (!requireAuth()) { throw new Error('redirect'); }
+    renderLayout('index.html');
+    document.getElementById('pageTitle').textContent = 'ড্যাশবোর্ড';
+    const content = document.getElementById('pageContent');
+    const badgeCls = { pending: 'badge-pending', contacted: 'badge-contacted', enrolled: 'badge-enrolled', rejected: 'badge-rejected' };
+    // ── Silent auto-refresh: loader only on FIRST load, then update in-place
+    //    (only when the data actually changed) so the page never flashes. ──
+    let firstLoad = true;
+    let refreshing = false;
+    let lastSignature = null;
+    async function load() {
+      if (refreshing) return;   // avoid overlapping requests
+      refreshing = true;
+      try {
+        const json = await API.get('/api/dashboard/stats');
+        const d = json.data;
+        // Re-render only if the data actually changed — no flicker otherwise.
+        const signature = JSON.stringify(d);
+        if (signature === lastSignature) { firstLoad = false; return; }
+        lastSignature = signature;
+        const passPct = d.totalResults ? Math.round((d.passCount / d.totalResults) * 100) : 0;
+        content.innerHTML = `
+          <div class="stat-grid">
+            <div class="stat-card"><div class="s-icon ic-teal"><i class="fa-solid fa-users"></i></div><div class="s-val">${d.totalEnrollments}</div><div class="s-label">মোট ভর্তি</div></div>
+            <div class="stat-card"><div class="s-icon ic-warn"><i class="fa-solid fa-hourglass-half"></i></div><div class="s-val">${d.pendingEnrollments}</div><div class="s-label">অপেক্ষমাণ ভর্তি</div></div>
+            <div class="stat-card"><div class="s-icon ic-teal"><i class="fa-solid fa-user-check"></i></div><div class="s-val">${d.enrolledCount}</div><div class="s-label">ভর্তি সম্পন্ন</div></div>
+            <div class="stat-card"><div class="s-icon ic-navy"><i class="fa-solid fa-calendar-check"></i></div><div class="s-val">${d.monthEnrollments}</div><div class="s-label">এ মাসের ভর্তি</div></div>
+            <div class="stat-card"><div class="s-icon ic-navy"><i class="fa-solid fa-file-lines"></i></div><div class="s-val">${d.totalResults}</div><div class="s-label">মোট ফলাফল</div></div>
+            <div class="stat-card"><div class="s-icon ic-teal"><i class="fa-solid fa-check-circle"></i></div><div class="s-val">${d.passCount}</div><div class="s-label">পাস</div></div>
+            <div class="stat-card"><div class="s-icon ic-danger"><i class="fa-solid fa-xmark-circle"></i></div><div class="s-val">${d.failCount}</div><div class="s-label">ফেল</div></div>
+            <div class="stat-card"><div class="s-icon ic-teal"><i class="fa-solid fa-chart-line"></i></div><div class="s-val">${passPct}%</div><div class="s-label">পাসের হার</div></div>
+          </div>
+          <div class="card chart-card ov-card">
+            <div class="ov-head">
+              <h3 class="ov-title">Website Overview</h3>
+              <div class="ov-live" id="visitsLive"></div>
+              <div class="ov-range">
+                <select id="visitsRange" aria-label="সময়সীমা নির্বাচন">
+                  <option value="7">Last 7 Days</option>
+                  <option value="14" selected>Last 14 Days</option>
+                  <option value="30">Last 30 Days</option>
+                  <option value="60">Last 60 Days</option>
+                </select>
+              </div>
+            </div>
+            <div class="visits-chart" id="visitsChart"><div class="page-loader">চার্ট লোড হচ্ছে…</div></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3>কোর্স অনুযায়ী</h3></div>
+            <div class="table-wrap">${courseBreakdownTable(d.courseBreakdown || [])}</div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3>সাম্প্রতিক ভর্তি</h3><a href="enrollments.html" class="btn btn-ghost btn-sm">সব দেখুন</a></div>
+            <div class="table-wrap">${recentEnrollments(d.recentEnrollments)}</div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3>সাম্প্রতিক ফলাফল</h3><a href="results.html" class="btn btn-ghost btn-sm">সব দেখুন</a></div>
+            <div class="table-wrap">${recentResults(d.recentResults)}</div>
+          </div>`;
+        // চার্ট: cached ডাটা থাকলে সাথে সাথে আঁকা হয় — কোনো ফ্লিকার নেই
+        bindVisitsRange();
+        drawVisitsChart();
+      } catch (err) {
+        // First load failed -> show the error. Later refresh failures must
+        // NOT wipe the dashboard the user is looking at.
+        if (firstLoad) {
+          content.innerHTML = '<div class="page-loader">' + esc(err.message) + '</div>';
+        }
+      } finally {
+        firstLoad = false;
+        refreshing = false;
+      }
+    }
+
+    const dashboardRefresh = setInterval(load, 8000);
+    window.addEventListener('beforeunload', () => clearInterval(dashboardRefresh));
+    window.addEventListener('sv-admin-refresh', load);
+    window.addEventListener('storage', (event) => {
+      if (event.key && (event.key.includes('sv_') || event.key === 'sv_site_content_v1')) {
+        load();
+      }
+    });
+    function recentEnrollments(rows) {
+      if (!rows.length) return '<div class="page-loader">কোনো ভর্তি নেই</div>';
+      const tr = rows.map(r => '<tr><td>' + esc(r.fullName) + '</td><td>' + esc(r.phone) + '</td><td>' + esc(r.course) + '</td><td><span class="badge ' + (badgeCls[r.status] || 'badge-pending') + '">' + esc(r.status) + '</span></td><td>' + fmtDate(r.createdAt) + '</td></tr>').join('');
+      return '<table class="data-table"><thead><tr><th>নাম</th><th>ফোন</th><th>কোর্স</th><th>স্ট্যাটাস</th><th>তারিখ</th></tr></thead><tbody>' + tr + '</tbody></table>';
+    }
+    function recentResults(rows) {
+      if (!rows.length) return '<div class="page-loader">কোনো ফলাফল নেই</div>';
+      const tr = rows.map(r => '<tr><td>' + esc(r.name) + '</td><td>' + esc(r.roll) + '</td><td>' + esc(r.course) + '</td><td><span class="badge ' + (r.result === 'Pass' ? 'badge-pass' : 'badge-fail') + '">' + esc(r.result) + '</span></td><td>' + esc(r.grade || '—') + '</td></tr>').join('');
+      return '<table class="data-table"><thead><tr><th>নাম</th><th>রোল</th><th>কোর্স</th><th>ফলাফল</th><th>গ্রেড</th></tr></thead><tbody>' + tr + '</tbody></table>';
+    }
+    function courseBreakdownTable(rows) {
+      if (!rows.length) return '<div class="page-loader">কোনো কোর্স নেই</div>';
+      const tr = rows.map(r => `<tr><td>${esc(r.name || '—')}</td><td>${Number(r.applicationCount ?? r.total ?? 0)}</td><td><span class="badge ${r.status === 'open' ? 'badge-pass' : 'badge-pending'}">${esc(r.status || 'open')}</span></td></tr>`).join('');
+      return '<table class="data-table"><thead><tr><th>কোর্স</th><th>আবেদন</th><th>স্ট্যাটাস</th></tr></thead><tbody>' + tr + '</tbody></table>';
+    }
+    // ── রিয়েল-টাইম ভিজিটর লাইন চার্ট (chart.png-এর মতো "Website Overview" ডিজাইন) ──
+    // (কোনো external library নেই — হালকা custom SVG চার্ট, প্রতি ৫ সেকেন্ডে আপডেট হয়)
+    const EN_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    // x-অক্ষের লেবেল — ছবির মতো "May 20" ফরম্যাটে
+    const enShortDate = (iso) => { const p = String(iso).split('-'); return (EN_MONTHS[Number(p[1]) - 1] || '') + ' ' + Number(p[2]); };
+    // টুলটিপের পূর্ণ তারিখ — ছবির মতো "Jun 10, 2026" ফরম্যাটে
+    const enFullDate = (iso) => { const p = String(iso).split('-'); return (EN_MONTHS[Number(p[1]) - 1] || '') + ' ' + Number(p[2]) + ', ' + p[0]; };
+
+    let visitsDays = 14;   // ডিফল্ট — Last 14 Days
+    function bindVisitsRange() {
+      const sel = document.getElementById('visitsRange');
+      if (!sel) return;
+      sel.value = String(visitsDays);
+      if (sel._bound) return;
+      sel._bound = true;
+      sel.addEventListener('change', () => {
+        visitsDays = Number(sel.value) || 30;
+        visitsSignature = null;   // নতুন সময়সীমায় জোর করে ডাটা আনা হবে
+        loadVisits();
+      });
+    }
+
+    let visitsData = null;
+    let visitsSignature = null;
+    let visitsLoading = false;
+
+    async function loadVisits() {
+      if (visitsLoading) return;
+      visitsLoading = true;
+      try {
+        const json = await API.get('/api/dashboard/visits?days=' + visitsDays);
+        const sig = JSON.stringify(json.data);
+        if (sig !== visitsSignature) {
+          visitsSignature = sig;
+          visitsData = json.data;
+          drawVisitsChart();
+        }
+      } catch (_) { /* চার্ট critical না — ড্যাশবোর্ড কাজ চালিয়ে যাবে */ }
+      finally { visitsLoading = false; }
+    }
+
+    function smoothPath(pts) {
+      if (!pts.length) return '';
+      if (pts.length === 1) return `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
+      let d = `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
+      for (let i = 0; i < pts.length - 1; i++) {
+        const p0 = pts[Math.max(i - 1, 0)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(i + 2, pts.length - 1)];
+        const c1x = p1.x + (p2.x - p0.x) / 6, c1y = p1.y + (p2.y - p0.y) / 6;
+        const c2x = p2.x - (p3.x - p1.x) / 6, c2y = p2.y - (p3.y - p1.y) / 6;
+        d += ` C ${c1x.toFixed(1)} ${c1y.toFixed(1)}, ${c2x.toFixed(1)} ${c2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+      }
+      return d;
+    }
+
+    function drawVisitsChart() {
+      const host = document.getElementById('visitsChart');
+      if (!host || !visitsData) return;
+      const series = visitsData.series || [];
+      if (!series.length) { host.innerHTML = '<div class="page-loader">কোনো ডাটা নেই</div>'; return; }
+
+      const W = Math.max(host.clientWidth || 640, 320);
+      const H = 300;
+      const P = { t: 26, r: 20, b: 42, l: 52 };   // l বাড়ানো হয়েছে — ছবির মতো y-অক্ষের লেবেল বাম পাশে
+      const iw = W - P.l - P.r, ih = H - P.t - P.b;
+      const counts = series.map(s => s.count || 0);
+
+      // সুন্দর y-অক্ষ — ছবির মতো ০ থেকে সমান ব্যবধানে ৬টি লেবেল (0,100,…,500 স্টাইল)
+      const rawMax = Math.max(10, ...counts);
+      const pow = Math.pow(10, Math.floor(Math.log10(rawMax)));
+      let maxY = 10 * pow;
+      for (const m of [1, 2, 2.5, 5]) { if (rawMax <= m * pow) { maxY = m * pow; break; } }
+      const TICKS = 5;
+      const X = (i) => P.l + (series.length === 1 ? iw / 2 : (i * iw) / (series.length - 1));
+      const Y = (v) => P.t + (1 - v / maxY) * ih;
+      const pts = counts.map((c, i) => ({ x: X(i), y: Y(c) }));
+
+      const line = smoothPath(pts);
+      const baseY = (P.t + ih).toFixed(1);
+      // লাইনের নিচে গ্রেডিয়েন্ট এরিয়া (ওয়েবসাইটের teal রঙে)
+      const area = line + ` L ${pts[pts.length - 1].x.toFixed(1)} ${baseY} L ${pts[0].x.toFixed(1)} ${baseY} Z`;
+
+      // প্রতিটা দিনের ভিজিটর সংখ্যা — প্রতিটা পয়েন্টে ছোট ডট + সংখ্যা লেবেল
+      // (দিন বেশি হলে প্রতি ২-৩ পয়েন্ট পরপর লেবেল, ডট সব পয়েন্টেই)
+      const labelEvery = series.length <= 20 ? 1 : (series.length <= 40 ? 2 : 3);
+      const dots = pts.map((p, i) => `<circle class="pt-dot" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5"></circle>`).join('');
+      const vlabels = pts.map((p, i) => (i % labelEvery === 0 || i === pts.length - 1)
+        ? `<text class="pt-label" x="${p.x.toFixed(1)}" y="${Math.max(p.y - 9, 12).toFixed(1)}" text-anchor="middle">${counts[i]}</text>`
+        : '').join('');
+
+      // হালকা অনুভূমিক গ্রিডলাইন + বাম পাশে y-লেবেল
+      let grid = '';
+      for (let t = 0; t <= TICKS; t++) {
+        const v = maxY * t / TICKS;
+        const y = Y(v).toFixed(1);
+        grid += `<line class="grid-line" x1="${P.l}" y1="${y}" x2="${(W - P.r).toFixed(1)}" y2="${y}"></line>`;
+        grid += `<text class="axis-label" x="${P.l - 12}" y="${y}" text-anchor="end" dominant-baseline="middle">${Number.isInteger(v) ? v : v.toFixed(1)}</text>`;
+      }
+
+      // x-অক্ষের লেবেল — ছবির মতো ~৫টি সমান দূরত্বে
+      const labelStep = Math.max(1, Math.ceil(series.length / 5));
+      let xlabels = '';
+      let lastLabelX = -Infinity;
+      const minGap = 56; // লেবেলের ওভারল্যাপ এড়াতে সর্বনিম্ন ফাঁক
+      series.forEach((s, i) => {
+        const isLast = i === series.length - 1;
+        if (i % labelStep !== 0 && !isLast) return;
+        const x = X(i);
+        if (x - lastLabelX < minGap && !isLast) return;
+        if (isLast && x - lastLabelX < minGap && xlabels) return;
+        lastLabelX = x;
+        xlabels += `<text class="axis-label" x="${x.toFixed(1)}" y="${H - 10}" text-anchor="middle">${enShortDate(s.date)}</text>`;
+      });
+
+      // পুরো গ্রাফ জুড়ে হোভার জোন — প্রতিটা পয়েন্টের পেছনে অদৃশ্য কলাম
+      const band = iw / series.length;
+      const hits = series.map((_, i) => {
+        const x1 = Math.max(P.l, X(i) - band / 2);
+        const x2 = Math.min(W - P.r, X(i) + band / 2);
+        return `<rect class="hit" data-i="${i}" x="${x1.toFixed(1)}" y="${P.t}" width="${(x2 - x1).toFixed(1)}" height="${ih}"></rect>`;
+      }).join('');
+
+      host.innerHTML = `
+        <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Website Overview — প্রতিদিনের ভিজিটর চার্ট">
+          <defs>
+            <linearGradient id="ovGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#00b894" stop-opacity="0.30"></stop>
+              <stop offset="100%" stop-color="#00b894" stop-opacity="0"></stop>
+            </linearGradient>
+          </defs>
+          ${grid}
+          <path class="area-path" d="${area}"></path>
+          <path class="line-path" d="${line}"></path>
+          ${dots}
+          ${vlabels}
+          ${xlabels}
+          <line class="hover-line" id="hoverLine" x1="0" y1="${P.t}" x2="0" y2="${(P.t + ih).toFixed(1)}" style="display:none"></line>
+          <circle class="hover-dot" id="hoverDot" r="5" style="display:none"></circle>
+          ${hits}
+        </svg>
+        <div class="chart-tip" id="chartTip"></div>`;
+
+      // রিয়েল-টাইম তারিখ — কার্ডের হেডে আজকের তারিখ + আজকের ভিজিটর সংখ্যা
+      // (প্রতি ৫ সেকেন্ডে অটো আপডেট হয়, তাই তারিখ/মাস সবসময় বর্তমান থাকে)
+      const live = document.getElementById('visitsLive');
+      if (live) {
+        const today = series[series.length - 1];
+        live.innerHTML = `<span class="ov-live-dot"></span>${enFullDate(today.date)} · আজ <b>${today.count || 0}</b> জন ভিজিট`;
+      }
+
+      // হোভার টুলটিপ — পুরো গ্রাফের যেকোনো জায়গায় মাউস নিলেই কাছের পয়েন্টের তথ্য দেখাবে
+      const tip = document.getElementById('chartTip');
+      const guide = document.getElementById('hoverLine');
+      const hdot = document.getElementById('hoverDot');
+      const showInfo = (i) => {
+        if (!tip) return;
+        // ছবির মতো গাঢ় টুলটিপ — দুই লাইন: তারিখ + "Visitors: N"
+        tip.innerHTML = `<div class="tip-date">${enFullDate(series[i].date)}</div><div class="tip-val">Visitors: ${counts[i]}</div>`;
+        tip.style.left = pts[i].x.toFixed(1) + 'px';
+        tip.style.top = pts[i].y.toFixed(1) + 'px';
+        tip.style.display = 'block';
+        if (guide) {
+          guide.setAttribute('x1', pts[i].x.toFixed(1));
+          guide.setAttribute('x2', pts[i].x.toFixed(1));
+          guide.style.display = 'block';
+        }
+        if (hdot) {
+          hdot.setAttribute('cx', pts[i].x.toFixed(1));
+          hdot.setAttribute('cy', pts[i].y.toFixed(1));
+          hdot.style.display = 'block';
+        }
+      };
+      const hideInfo = () => {
+        if (tip) tip.style.display = 'none';
+        if (guide) guide.style.display = 'none';
+        if (hdot) hdot.style.display = 'none';
+      };
+      host.querySelectorAll('.hit').forEach((el) => {
+        el.addEventListener('mouseenter', () => showInfo(Number(el.getAttribute('data-i'))));
+        el.addEventListener('mouseleave', hideInfo);
+      });
+      if (!host._hideInfoBound) {           // একবারই বাইন্ড হবে (রিড্রতে জমে যাবে না)
+        host._hideInfoBound = true;
+        host.addEventListener('mouseleave', hideInfo);
+      }
+    }
+
+    let chartResizeTimer = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(chartResizeTimer);
+      chartResizeTimer = setTimeout(drawVisitsChart, 150);
+    });
+
+    loadVisits();
+    const visitsRefresh = setInterval(loadVisits, 5000);   // রিয়েল-টাইম আপডেট
+    window.addEventListener('beforeunload', () => clearInterval(visitsRefresh));
+
+    load();
+  </script>
+</body>
+</html>
+

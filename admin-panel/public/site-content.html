@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>হোম পেজ কনটেন্ট — SoftVerse Admin</title>
+  <link rel="icon" type="image/png" href="../../Images/favicon.webp"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Syne:wght@700;800&display=swap"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+  <link rel="stylesheet" href="css/admin.css"/>
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="admin-shell" id="shell"></div>
+  <div id="toastHost"></div>
+
+  <script src="js/common.js?v=7"></script>
+  <script>
+    if (!requireAuth()) { throw new Error('redirect'); }
+    renderLayout('site-content.html');
+    document.getElementById('pageTitle').textContent = 'হোম পেজ কনটেন্ট';
+    const content = document.getElementById('pageContent');
+
+    const defaultState = {
+      stats: [],
+      reviews: [],
+      videos: [],
+      gallery: [],
+      ticker: []
+    };
+
+    const state = { ...defaultState };
+
+    function renderStatsEditor() {
+      return `
+        <div class="card">
+          <div class="card-head">
+            <h3>স্ট্যাটিস</h3>
+            <button class="btn btn-primary btn-sm" data-action="add-stat"><i class="fa-solid fa-plus"></i> নতুন</button>
+          </div>
+          <div class="stack-list" id="statsList">${state.stats.map((item, index) => `
+            <div class="mini-form" data-index="${index}">
+              <input value="${esc(item.value || '')}" data-field="value" placeholder="মান (যেমন ৮০০+)"/>
+              <input value="${esc(item.label || '')}" data-field="label" placeholder="লেবেল (যেমন সফল শিক্ষার্থী)"/>
+              <button class="btn btn-ghost btn-sm" data-action="remove-stat" data-index="${index}"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          `).join('') || '<div class="empty-note">কোনো স্ট্যাট নেই</div>'}</div>
+        </div>
+      `;
+    }
+
+    function renderReviewsEditor() {
+      return `
+        <div class="card">
+          <div class="card-head">
+            <h3>রিভিউ / সাফল্যের গল্প</h3>
+            <button class="btn btn-primary btn-sm" data-action="add-review"><i class="fa-solid fa-plus"></i> নতুন</button>
+          </div>
+          <div class="stack-list" id="reviewsList">${state.reviews.map((item, index) => `
+            <div class="mini-form tall" data-index="${index}">
+              <textarea data-field="quote" placeholder="রিভিউ লেখা">${esc(item.quote || '')}</textarea>
+              <input value="${esc(item.author || '')}" data-field="author" placeholder="লেখক / ব্যাচ"/>
+              <input value="${esc(item.stars || 5)}" data-field="stars" placeholder="স্টারস"/>
+              <button class="btn btn-ghost btn-sm" data-action="remove-review" data-index="${index}"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          `).join('') || '<div class="empty-note">কোনো রিভিউ নেই</div>'}</div>
+        </div>
+      `;
+    }
+
+    function renderVideosEditor() {
+      return `
+        <div class="card">
+          <div class="card-head">
+            <h3>ভিডিও</h3>
+            <button class="btn btn-primary btn-sm" data-action="add-video"><i class="fa-solid fa-plus"></i> নতুন</button>
+          </div>
+          <div class="stack-list" id="videosList">${state.videos.map((item, index) => `
+            <div class="mini-form" data-index="${index}">
+              <input value="${esc(item.title || '')}" data-field="title" placeholder="ভিডিও শিরোনাম"/>
+              <input value="${esc(item.videoId || '')}" data-field="videoId" placeholder="YouTube video ID বা full URL"/>
+              <input value="${esc(item.thumbnail || '')}" data-field="thumbnail" placeholder="থাম্বনেইল URL (ঐচ্ছিক; ফাঁকা থাকলে Audo thumbnail)"/>
+              <button class="btn btn-ghost btn-sm" data-action="remove-video" data-index="${index}"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          `).join('') || '<div class="empty-note">কোনো ভিডিও নেই</div>'}</div>
+        </div>
+      `;
+    }
+
+    function renderGalleryEditor() {
+      return `
+        <div class="card">
+          <div class="card-head">
+            <h3>গ্যালারি</h3>
+            <button class="btn btn-primary btn-sm" data-action="add-gallery"><i class="fa-solid fa-plus"></i> নতুন</button>
+          </div>
+          <div class="stack-list" id="galleryList">${state.gallery.map((item, index) => `
+            <div class="mini-form" data-index="${index}">
+              <input value="${esc(item.title || '')}" data-field="title" placeholder="শিরোনাম"/>
+              <input value="${esc(item.category || 'batch')}" data-field="category" placeholder="category (batch/program/graduation)"/>
+              <div class="gallery-image-box" style="display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;">
+                <button type="button" class="btn btn-ghost btn-sm" data-action="pick-gallery-image" data-index="${index}"><i class="fa-solid fa-image"></i> ছবি বেছে নিন</button>
+                <input type="file" accept="image/*" data-field="imageFile" data-index="${index}" style="display:none"/>
+                <span class="gallery-preview-text" style="font-size:.75rem;color:#8fafc8;">${item.src ? 'ছবি বেছে নেওয়া আছে' : 'কোনো ছবি নেই'}</span>
+              </div>
+              <button class="btn btn-ghost btn-sm" data-action="remove-gallery" data-index="${index}"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          `).join('') || '<div class="empty-note">কোনো গ্যালারি ছবি নেই</div>'}</div>
+        </div>
+      `;
+    }
+
+    function renderTickerEditor() {
+      return `
+        <div class="card">
+          <div class="card-head">
+            <h3>টিকার (navbar-এর নিচের smooth auto-scroll লেখা)</h3>
+            <button class="btn btn-primary btn-sm" data-action="add-ticker"><i class="fa-solid fa-plus"></i> নতুন</button>
+          </div>
+          <div class="stack-list" id="tickerList">${(state.ticker || []).map((item, index) => `
+            <div class="mini-form" data-index="${index}">
+              <input value="${esc(String(item || ''))}" data-field="text" placeholder="টিকার লেখা (যেমন: ভর্তি চলছে — নতুন ব্যাচ শুরু)"/>
+              <button class="btn btn-ghost btn-sm" data-action="remove-ticker" data-index="${index}"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          `).join('') || '<div class="empty-note">কোনো টিকার লেখা নেই</div>'}</div>
+        </div>
+      `;
+    }
+
+    function renderPage() {
+      content.innerHTML = `
+        <div class="card page-toolbar">
+          <div><strong>হোম পেজ কনটেন্ট ম্যানেজ</strong><p>এই কনটেন্টগুলো ওয়েবসাইটের হোমপেজে রিয়েল-টাইমে দেখানো হবে।</p></div>
+          <button class="btn btn-primary" id="saveContentBtn"><i class="fa-solid fa-floppy-disk"></i> সংরক্ষণ করুন</button>
+        </div>
+        ${renderTickerEditor()}
+        ${renderStatsEditor()}
+        ${renderReviewsEditor()}
+        ${renderVideosEditor()}
+        ${renderGalleryEditor()}
+      `;
+
+      // ⚠️ নতুন row যোগের আগে DOM-এ টাইপ করা সব মান state-এ তুলে নিতে হবে —
+      // নাহলে renderPage() পুরনো state দিয়ে আবার এঁকে দিলে সব লেখা মুছে যেত।
+      content.querySelectorAll('[data-action="add-ticker"]').forEach(btn => btn.addEventListener('click', () => { collectCurrentState(); if (!Array.isArray(state.ticker)) state.ticker = []; state.ticker.push(''); renderPage(); }));
+      content.querySelectorAll('[data-action="add-stat"]').forEach(btn => btn.addEventListener('click', () => { collectCurrentState(); state.stats.push({ value: '', label: '' }); renderPage(); }));
+      content.querySelectorAll('[data-action="add-review"]').forEach(btn => btn.addEventListener('click', () => { collectCurrentState(); state.reviews.push({ quote: '', author: '', stars: 5 }); renderPage(); }));
+      content.querySelectorAll('[data-action="add-video"]').forEach(btn => btn.addEventListener('click', () => { collectCurrentState(); state.videos.push({ title: '', videoId: '', thumbnail: '' }); renderPage(); }));
+      content.querySelectorAll('[data-action="add-gallery"]').forEach(btn => btn.addEventListener('click', () => { collectCurrentState(); state.gallery.push({ title: '', category: 'batch', src: '' }); renderPage(); }));
+
+      content.querySelectorAll('[data-action="pick-gallery-image"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = Number(btn.dataset.index);
+          const fileInput = content.querySelector(`input[data-field="imageFile"][data-index="${idx}"]`);
+          if (fileInput) fileInput.click();
+        });
+      });
+
+      content.querySelectorAll('input[data-field="imageFile"]').forEach(fileInput => {
+        fileInput.addEventListener('change', (event) => {
+          const file = event.target.files && event.target.files[0];
+          if (!file) return;
+          const idx = Number(fileInput.dataset.index);
+          if (Number.isNaN(idx) || !Array.isArray(state.gallery) || idx < 0 || idx >= state.gallery.length) return;
+          // ছবিটা ব্রাউজারেই রিসাইজ + কমপ্রেস (সর্বোচ্চ 1400px, JPEG 82%) —
+          // নাহলে বড় ছবির base64 সার্ভারের limit ছাড়িয়ে "Request Entity Too Large" দেয়।
+          const reader = new FileReader();
+          reader.onload = () => {
+            const img = new Image();
+            img.onload = async () => {
+              const MAX = 1400;
+              const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+              const w = Math.max(1, Math.round(img.width * scale));
+              const h = Math.max(1, Math.round(img.height * scale));
+              const canvas = document.createElement('canvas');
+              canvas.width = w; canvas.height = h;
+              canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+              let src;
+              try { src = canvas.toDataURL('image/jpeg', 0.82); }
+              catch (_) { src = String(reader.result || ''); }   // ব্যর্থ হলে মূল ছবিই রাখা হয়
+              state.gallery[idx] = { ...(state.gallery[idx] || { title: '', category: 'batch', src: '' }), src };
+              renderPage();
+              try {
+                await saveToServer();   // ছবি বেছে নেওয়ার সাথে সাথেই স্থায়ী সেভ
+                toast('ছবি সংরক্ষিত হয়েছে');
+              } catch (err) {
+                toast(err.message || 'ছবি সংরক্ষণ ব্যর্থ — Save চেপে আবার চেষ্টা করুন', 'error');
+              }
+            };
+            img.onerror = () => {
+              // ছবি ফাইল পড়া না গেলে মূল ডাটাই রাখার চেষ্টা
+              state.gallery[idx] = { ...(state.gallery[idx] || { title: '', category: 'batch', src: '' }), src: String(reader.result || '') };
+              renderPage();
+            };
+            img.src = String(reader.result || '');
+          };
+          reader.readAsDataURL(file);
+        });
+      });
+
+      // ⚠️ ডিলিটের আগেও DOM → state সিঙ্ক জরুরি — নাহলে অন্য row-তে টাইপ করা
+      // লেখা হারিয়ে যায় এবং ভুল (ফাঁকা) ডাটা সার্ভারে সেভ হয়ে যেতে পারে।
+      // ডিলিটের পরে সাথে সাথে সার্ভারে সেভ হয় — তাই মুছে ফেলা স্থায়ীভাবেই হয়।
+      content.querySelectorAll('[data-action="remove-stat"]').forEach(btn => btn.addEventListener('click', () => removeRow('stats', Number(btn.dataset.index))));
+      content.querySelectorAll('[data-action="remove-review"]').forEach(btn => btn.addEventListener('click', () => removeRow('reviews', Number(btn.dataset.index))));
+      content.querySelectorAll('[data-action="remove-ticker"]').forEach(btn => btn.addEventListener('click', () => removeRow('ticker', Number(btn.dataset.index))));
+      content.querySelectorAll('[data-action="remove-gallery"]').forEach(btn => btn.addEventListener('click', () => removeRow('gallery', Number(btn.dataset.index))));
+      content.querySelectorAll('[data-action="remove-video"]').forEach(btn => btn.addEventListener('click', () => removeRow('videos', Number(btn.dataset.index))));
+
+      const saveBtn = document.getElementById('saveContentBtn');
+      if (saveBtn) saveBtn.addEventListener('click', saveContent);
+    }
+
+    function collectCurrentState() {
+      const collect = (list, fieldMap) => {
+        return Array.from(list).map((rowEl) => {
+          const row = {};
+          fieldMap.forEach(({ field, type = 'text' }) => {
+            const input = rowEl.querySelector(`[data-field="${field}"]`);
+            if (!input) return;
+            const value = input.value.trim();
+            row[field] = type === 'number' ? Number(value || 0) : value;
+          });
+          return row;
+        });
+      };
+
+      state.ticker = Array.from(content.querySelectorAll('#tickerList .mini-form'))
+        .map(rowEl => (rowEl.querySelector('[data-field="text"]')?.value || '').trim())
+        .filter(Boolean);
+      state.stats = collect(content.querySelectorAll('#statsList .mini-form'), [
+        { field: 'value' },
+        { field: 'label' }
+      ]);
+      state.reviews = collect(content.querySelectorAll('#reviewsList .mini-form'), [
+        { field: 'quote' },
+        { field: 'author' },
+        { field: 'stars', type: 'number' }
+      ]);
+      state.videos = collect(content.querySelectorAll('#videosList .mini-form'), [
+        { field: 'title' },
+        { field: 'videoId' },
+        { field: 'thumbnail' }
+      ]);
+      state.gallery = Array.from(content.querySelectorAll('#galleryList .mini-form')).map((rowEl) => {
+        const title = rowEl.querySelector('[data-field="title"]')?.value.trim() || '';
+        const category = rowEl.querySelector('[data-field="category"]')?.value.trim() || 'batch';
+        const idx = Number(rowEl.dataset.index);
+        // বাউন্ড চেক — ভুল index হলে অন্য row-র ছবি চলে আসবে না
+        const existing = (Array.isArray(state.gallery) && state.gallery[idx]) || { title: '', category: 'batch', src: '' };
+        return {
+          title,
+          category,
+          src: existing.src || ''
+        };
+      });
+    }
+
+    // ── একটা row মুছে ফেলা + সাথে সাথে সার্ভারে স্থায়ী সেভ ──
+    async function removeRow(listKey, index) {
+      if (Number.isNaN(index) || !Array.isArray(state[listKey])) return;
+      if (index < 0 || index >= state[listKey].length) return;   // পুরনো/ভুল index হলে কিছুই না — ভুল ডাটা মুছবে না
+      collectCurrentState();          // টাইপ করা সব লেখা আগে state-এ নিন
+      state[listKey].splice(index, 1);
+      renderPage();                   // সঠিক নতুন index নিয়ে আবার আঁকা হলো
+      try {
+        await saveToServer();
+        toast('মুছে ফেলা হয়েছে ও সংরক্ষিত');
+      } catch (err) {
+        toast(err.message || 'মুছে ফেলা হলেও সংরক্ষণ ব্যর্থ — Save চেপে আবার চেষ্টা করুন', 'error');
+      }
+    }
+
+    // ── বর্তমান state সার্ভারে + localStorage-এ স্থায়ীভাবে সেভ ──
+    async function saveToServer() {
+      const data = {
+        stats: (state.stats || []).filter(item => item.value || item.label),
+        reviews: (state.reviews || []).filter(item => item.quote || item.author),
+        videos: (state.videos || []).filter(item => item.title || item.videoId),
+        gallery: (state.gallery || []).filter(item => item.title || item.src),
+        ticker: (state.ticker || []).filter(item => String(item || '').trim()),
+      };
+      const res = await API.put('/api/site-content', data);
+      localStorage.setItem('sv_site_content_v1', JSON.stringify(res.data || data));
+      window.dispatchEvent(new CustomEvent('sv-content-updated', { detail: 'sv_site_content_v1' }));
+      return res;
+    }
+
+    async function saveContent() {
+      collectCurrentState();
+      try {
+        await saveToServer();
+        toast('হোম পেজ কনটেন্ট সংরক্ষণ হয়েছে');
+        load();
+      } catch (err) {
+        toast(err.message || 'সংরক্ষণ ব্যর্থ হয়েছে', 'error');
+      }
+    }
+
+    async function load() {
+      try {
+        const cached = localStorage.getItem('sv_site_content_v1');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          Object.assign(state, parsed || {});
+        }
+        const res = await API.get('/api/site-content');
+        Object.assign(state, res.data || {});
+        // সার্ভার/ক্যাশ থেকে অ্যারে না এলে (বা ভাঙা ডাটা এলে) ফাঁকা অ্যারে —
+        // নাহলে .map()/.push() ক্র্যাশ করে পুরো পেজ অচল হয়ে যেত।
+        ['stats', 'reviews', 'videos', 'gallery', 'ticker'].forEach((k) => {
+          if (!Array.isArray(state[k])) state[k] = [];
+        });
+        localStorage.setItem('sv_site_content_v1', JSON.stringify(state));
+        renderPage();
+      } catch (err) {
+        content.innerHTML = '<div class="page-loader">' + esc(err.message) + '</div>';
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>

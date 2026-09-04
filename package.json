@@ -1,0 +1,11 @@
+{
+  "name": "softverse-it-website",
+  "version": "1.0.0",
+  "description": "SoftVerse IT Training Center website + admin panel (Node/Express backend in admin-panel/)",
+  "private": true,
+  "scripts": {
+    "start": "node admin-panel/server.js",
+    "seed": "node admin-panel/seed.js",
+    "test": "node tests/admin-live-sync.test.js && node JS/_test_guard.js && node admin-panel/public/js/_test_offline.js"
+  }
+}

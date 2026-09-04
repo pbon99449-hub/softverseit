@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>রেজাল্ট ম্যানেজ — SoftVerse Admin</title>
+  <link rel="icon" type="image/png" href="../../Images/favicon.webp"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Syne:wght@700;800&display=swap"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+  <link rel="stylesheet" href="css/admin.css"/>
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="admin-shell" id="shell"></div>
+  <div id="toastHost"></div>
+
+  <div class="modal-overlay" id="editModal">
+    <div class="modal-box" style="max-width:640px">
+      <button class="modal-close" id="modalClose"><i class="fa-solid fa-xmark"></i></button>
+      <h2 id="modalTitle">রেজাল্ট সম্পাদনা</h2>
+      <div class="form-grid" id="editForm"></div>
+    </div>
+  </div>
+
+  <script src="js/common.js?v=7"></script>
+  <script>
+    if (!requireAuth()) { throw new Error('redirect'); }
+    renderLayout('results.html');
+    document.getElementById('pageTitle').textContent = 'রেজাল্ট ম্যানেজ';
+
+    const content = document.getElementById('pageContent');
+    const state = { page: 1, search: '', course: '', result: '' };
+    let editingId = null;
+
+    content.innerHTML = `
+      <div class="card">
+        <div class="card-head">
+          <h3>সকল রেজাল্ট</h3>
+          <button class="btn btn-primary btn-sm" id="addBtn"><i class="fa-solid fa-plus"></i> নতুন রেজাল্ট</button>
+        </div>
+        <div class="toolbar" style="margin-bottom:1.1rem">
+          <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input id="searchInput" placeholder="নাম / রোল / রেজি খুঁজুন..."/></div>
+          <select id="resultFilter">
+            <option value="">সব ফলাফল</option>
+            <option value="Pass">পাশ</option>
+            <option value="Fail">ফেল</option>
+          </select>
+        </div>
+        <div class="table-wrap" id="tableWrap"><div class="page-loader"><span class="spinner"></span> সব ফলাফল লোড হচ্ছে...</div></div>
+        <div class="pagination" id="pagination"></div>
+      </div>`;
+
+    async function load() {
+      const q = new URLSearchParams({ page: state.page, limit: 15 });
+      if (state.search) q.set('search', state.search);
+      if (state.course) q.set('course', state.course);
+      if (state.result) q.set('result', state.result);
+      try {
+        const json = await API.get('/api/results?' + q.toString());
+        renderTable(json.data);
+        renderPagination(json.pagination, p => { state.page = p; load(); });
+      } catch (err) {
+        document.getElementById('tableWrap').innerHTML = '<div class="page-loader">' + esc(err.message) + '</div>';
+      }
+    }
+
+    function renderTable(rows) {
+      const wrap = document.getElementById('tableWrap');
+      if (!rows.length) { wrap.innerHTML = '<table class="data-table"><tbody><tr class="empty-row"><td>কোনো রেজাল্ট পাওয়া যায়নি</td></tr></tbody></table>'; return; }
+      const tr = rows.map(r => `
+        <tr>
+          <td><strong>${esc(r.name)}</strong></td>
+          <td>${esc(r.roll)}</td>
+          <td>${esc(r.registration)}</td>
+          <td>${esc(r.course)}</td>
+          <td>${esc(r.batch)}</td>
+          <td>${r.total}</td>
+          <td>${esc(r.grade || '—')}</td>
+          <td><span class="badge ${r.result === 'Pass' ? 'badge-pass' : 'badge-fail'}">${esc(r.result)}</span></td>
+          <td>
+            <button class="icon-btn edit-btn" data-id="${r._id}" title="সম্পাদনা"><i class="fa-solid fa-pen"></i></button>
+            <button class="icon-btn danger del-btn" data-id="${r._id}" title="মুছে ফেলুন"><i class="fa-solid fa-trash"></i></button>
+          </td>
+        </tr>`).join('');
+      wrap.innerHTML = `<table class="data-table"><thead><tr><th>নাম</th><th>রোল</th><th>রেজিস্ট্রেশন</th><th>কোর্স</th><th>ব্যাচ</th><th>মোট</th><th>গ্রেড</th><th>ফলাফল</th><th>অ্যাকশন</th></tr></thead><tbody>${tr}</tbody></table>`;
+      wrap.querySelectorAll('.edit-btn').forEach(b => b.addEventListener('click', () => openModal(b.dataset.id)));
+      wrap.querySelectorAll('.del-btn').forEach(b => b.addEventListener('click', () => del(b.dataset.id)));
+    }
+
+    const overlay = document.getElementById('editModal');
+    const editForm = document.getElementById('editForm');
+    const fields = [
+      ['name','নাম'], ['father','বাবার নাম'], ['mother','মায়ের নাম'],
+      ['course','কোর্স'], ['batch','ব্যাচ'], ['roll','রোল'], ['registration','রেজিস্ট্রেশন'],
+      ['courseStart','কোর্স শুরু'], ['courseFinish','কোর্স শেষ'],
+      ['typing','টাইপিং'], ['msWord','MS Word'], ['msExcel','MS Excel'], ['msPowerPoint','MS PowerPoint'], ['viva','ভাইভা'],
+    ];
+    function fieldRow(key, label, full) {
+      return `<div class="${full ? 'full' : ''}"><label>${label}</label><input id="f-${key}"/></div>`;
+    }
+    function buildFormBody(prefix) {
+      const body = {};
+      fields.forEach(([k]) => { body[k] = document.getElementById(prefix + k).value.trim(); });
+      body.typing = Number(document.getElementById(prefix + 'typing').value) || 0;
+      body.msWord = Number(document.getElementById(prefix + 'msWord').value) || 0;
+      body.msExcel = Number(document.getElementById(prefix + 'msExcel').value) || 0;
+      body.msPowerPoint = Number(document.getElementById(prefix + 'msPowerPoint').value) || 0;
+      body.viva = Number(document.getElementById(prefix + 'viva').value) || 0;
+      body.total = body.typing + body.msWord + body.msExcel + body.msPowerPoint + body.viva;
+      body.grade = document.getElementById(prefix + 'grade').value || '—';
+      body.result = document.getElementById(prefix + 'result').value;
+      return body;
+    }
+
+    function openModal(id) {
+      editingId = id;
+      document.getElementById('modalTitle').textContent = id ? 'রেজাল্ট সম্পাদনা' : 'নতুন রেজাল্ট';
+      const rows =
+        fieldRow('name','নাম *') + fieldRow('father','বাবার নাম') + fieldRow('mother','মায়ের নাম') +
+        fieldRow('course','কোর্স *', true) + fieldRow('batch','ব্যাচ *') + fieldRow('roll','রোল *') + fieldRow('registration','রেজিস্ট্রেশন *') +
+        fieldRow('courseStart','কোর্স শুরু') + fieldRow('courseFinish','কোর্স শেষ') +
+        fieldRow('typing','টাইপিং (১০০-এ)') + fieldRow('msWord','MS Word (১০০-এ)') + fieldRow('msExcel','MS Excel (১০০-এ)') + fieldRow('msPowerPoint','MS PowerPoint') + fieldRow('viva','ভাইভা') +
+        `<div><label>গ্রেড</label><input id="f-grade"/></div>` +
+        `<div><label>ফলাফল</label><select id="f-result"><option value="Pass">Pass</option><option value="Fail">Fail</option></select></div>` +
+        `<div class="full form-actions">
+          <button class="btn btn-ghost" id="editCancel">বাতিল</button>
+          <button class="btn btn-primary" id="editSave">সংরক্ষণ করুন</button>
+        </div>`;
+      editForm.innerHTML = rows;
+      if (id) {
+        API.get('/api/results?limit=500').then(j => {
+          const r = j.data.find(x => x._id === id);
+          if (!r) return;
+          fields.forEach(([k]) => { const el = document.getElementById('f-' + k); if (el) el.value = r[k] != null ? r[k] : ''; });
+          document.getElementById('f-grade').value = r.grade || '';
+          document.getElementById('f-result').value = r.result || 'Pass';
+        });
+      }
+      document.getElementById('editSave').onclick = save;
+      document.getElementById('editCancel').onclick = () => overlay.classList.remove('active');
+      overlay.classList.add('active');
+    }
+    async function save() {
+      const body = buildFormBody('f-');
+      if (!body.name || !body.course || !body.batch || !body.roll || !body.registration) { toast('নাম, কোর্স, ব্যাচ, রোল ও রেজিস্ট্রেশন অবশ্যই দিতে হবে', 'error'); return; }
+      try {
+        if (editingId) { await API.put('/api/results/' + editingId, body); toast('রেজাল্ট আপডেট হয়েছে'); }
+        else { await API.post('/api/results', body); toast('নতুন রেজাল্ট যোগ হয়েছে'); }
+        overlay.classList.remove('active'); load();
+      } catch (err) { toast(err.message, 'error'); }
+    }
+
+    document.getElementById('addBtn').addEventListener('click', () => openModal(null));
+    document.getElementById('modalClose').addEventListener('click', () => overlay.classList.remove('active'));
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('active'); });
+
+    async function del(id) {
+      if (!confirm('আপনি কি নিশ্চিত? এই রেজাল্টটি মুছে ফেলা হবে')) return;
+      try { await API.del('/api/results/' + id); toast('রেজাল্ট মুছে ফেলা হয়েছে'); load(); }
+      catch (err) { toast(err.message, 'error'); }
+    }
+
+    const searchInput = document.getElementById('searchInput');
+    let searchTimer;
+    searchInput.addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(() => { state.search = searchInput.value.trim(); state.page = 1; load(); }, 350); });
+    document.getElementById('resultFilter').addEventListener('change', e => { state.result = e.target.value; state.page = 1; load(); });
+
+    load();
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>নতুন অ্যাডমিন — SoftVerse Admin</title>
+  <link rel="icon" type="image/png" href="../../Images/favicon.webp"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Syne:wght@700;800&display=swap"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+  <link rel="stylesheet" href="css/admin.css"/>
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <div class="login-page">
+    <div class="login-card" style="max-width:430px">
+      <button class="login-close" id="closeBtn" title="বন্ধ করুন" aria-label="বন্ধ করুন"><i class="fa-solid fa-xmark"></i></button>
+      <div class="login-brand">
+        <div class="lb-title">SOFTVERSE <span>ADMIN</span></div>
+        <div class="lb-sub">নতুন অ্যাডমিন অ্যাকাউন্ট তৈরি করুন</div>
+      </div>
+
+      <div class="login-err" id="regErr"></div>
+
+      <form id="regForm" novalidate>
+        <div style="margin-bottom:1rem">
+          <label for="name">নাম</label>
+          <input type="text" id="name" placeholder="আপনার পুরো নাম" autocomplete="name"/>
+        </div>
+        <div style="margin-bottom:1rem">
+          <label for="email">ইমেইল</label>
+          <input type="email" id="email" placeholder="you@example.com" autocomplete="email"/>
+        </div>
+        <div style="margin-bottom:1rem">
+          <label for="password">পাসওয়ার্ড</label>
+          <div class="pw-wrap">
+            <input type="password" id="password" placeholder="কমপক্ষে ৬ অক্ষর" autocomplete="new-password"/>
+            <button type="button" class="pw-toggle" id="pwToggle" title="পাসওয়ার্ড দেখুন" aria-label="পাসওয়ার্ড দেখুন"><i class="fa-solid fa-eye" id="pwIcon"></i></button>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary" id="regBtn">
+          <span id="btnText">রেজিস্টার অ্যাকাউন্ট</span>
+          <span id="btnLoader" style="display:none" class="spinner"></span>
+        </button>
+      </form>
+
+      <p style="margin-top:1.2rem;text-align:center;font-size:.85rem;color:var(--textSub)">
+        আগে থেকে অ্যাকাউন্ট আছে? <a href="login.html" style="color:var(--teal);font-weight:600">লগইন করুন</a>
+      </p>
+    </div>
+  </div>
+
+  <div id="toastHost"></div>
+
+  <script src="js/common.js?v=7"></script>
+  <script>
+    const form = document.getElementById('regForm');
+    const closeBtn = document.getElementById('closeBtn');
+    closeBtn.addEventListener('click', closePage);
+    function closePage() {
+      window.location.href = '../../index.html';
+    }
+    const errBox = document.getElementById('regErr');
+    const btn = document.getElementById('regBtn');
+    const btnText = document.getElementById('btnText');
+    const btnLoader = document.getElementById('btnLoader');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errBox.classList.remove('show');
+
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!name || !email || !password) {
+        errBox.textContent = 'নাম, ইমেইল এবং পাসওয়ার্ড দিন';
+        errBox.classList.add('show');
+        return;
+      }
+      if (password.length < 6) {
+        errBox.textContent = 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে';
+        errBox.classList.add('show');
+        return;
+      }
+
+      btn.disabled = true;
+      btnText.style.display = 'none';
+      btnLoader.style.display = 'inline-block';
+
+      try {
+        const res = await API.post('/api/auth/register', { name, email, password });
+        if (res.success) {
+          // Real account created. Now hide register page & show login page.
+          // User logs in with the exact email/password they registered with.
+          clearSession(); // ensure old sessions do not skip login
+          toast('রেজিস্টার সম্পন্ন! এবার লগইন করুন');
+          setTimeout(() => { location.href = 'login.html'; }, 1200);
+        } else {
+          errBox.textContent = res.message || 'রেজিস্টার সফল হয়নি';
+          errBox.classList.add('show');
+        }
+      } catch (err) {
+        errBox.textContent = err.message || 'লগইন ব্যর্থ হয়েছে';
+        errBox.classList.add('show');
+      } finally {
+        btn.disabled = false;
+        btnText.style.display = 'inline';
+        btnLoader.style.display = 'none';
+      }
+    });
+
+    // Password show/hide toggle
+    const pwInput = document.getElementById('password');
+    const pwToggle = document.getElementById('pwToggle');
+    const pwIcon = document.getElementById('pwIcon');
+    pwToggle.addEventListener('click', () => {
+      const isVisible = pwInput.type === 'text';
+      pwInput.type = isVisible ? 'password' : 'text';
+      pwIcon.className = isVisible ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
+      pwToggle.title = isVisible ? 'পাসওয়ার্ড লুকান' : 'পাসওয়ার্ড দেখুন';
+    });
+  </script>
+</body>
+</html>

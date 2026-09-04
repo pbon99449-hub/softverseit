@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>পপআপ SMS — SoftVerse Admin</title>
+  <link rel="icon" type="image/png" href="../../Images/favicon.webp"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Syne:wght@700;800&display=swap"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+  <link rel="stylesheet" href="css/admin.css"/>
+  <style>
+    .popup-form { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .popup-form .full { grid-column: 1 / -1; }
+    .popup-form label { display: block; font-size: .8rem; color: #8fafc8; margin-bottom: .35rem; font-weight: 600; }
+    .popup-form input {
+      width: 100%; padding: .7rem .85rem; border-radius: 8px;
+      border: 1px solid rgba(0,184,148,.18); background: rgba(2,5,9,.6);
+      color: #e8f0fe; font-family: inherit; font-size: .9rem;
+    }
+    .popup-form input:focus { outline: none; border-color: #00b894; }
+    .toggle-row { display: flex; align-items: center; gap: .6rem; cursor: pointer; }
+    .toggle-row input { width: auto; }
+    .popup-preview {
+      margin-top: 1.5rem; border: 1px dashed rgba(0,184,148,.35); border-radius: 12px; padding: 1rem;
+      display: grid; grid-template-columns: 300px 1fr; gap: 1rem; align-items: start;
+    }
+    .popup-preview-title { font-size: .78rem; color: #8fafc8; text-transform: uppercase; letter-spacing: .5px; margin-bottom: .8rem; grid-column: 1 / -1; }
+    .pv-card { background: #060d18; border: 1px solid rgba(0,184,148,.28); border-radius: 16px; overflow: hidden; }
+    .pv-banner { background: linear-gradient(135deg, #1a2e5e, rgba(0,122,98,.7)); padding: 1rem; text-align: center; }
+    .pv-badge { display:inline-flex; gap:.3rem; background: rgba(0,184,148,.2); border:1px solid #00b894; padding:.2rem .7rem; border-radius:99px; font-size:.7rem; color:#fff; }
+    .pv-head { font-weight:800; color:#fff; margin:.5rem 0 .2rem; line-height:1.2; }
+    .pv-sub { font-size:.75rem; color: rgba(255,255,255,.6); }
+    .pv-body { padding:1rem; font-size:.8rem; color:#e8f0fe; }
+    .pv-row { padding:.3rem 0; border-bottom:1px solid rgba(0,184,148,.1); }
+    .pv-btns { display:flex; gap:.5rem; margin-top:.8rem; }
+    .pv-enroll { flex:1; padding:.45rem; border:none; border-radius:8px; background:#00b894; color:#fff; font-weight:600; cursor:pointer; }
+    .pv-skip { padding:.45rem .8rem; border:1px solid rgba(255,255,255,.25); border-radius:8px; background:transparent; color:#fff; font-size:.78rem; cursor:pointer; }
+    @media(max-width:760px){ .popup-form{grid-template-columns:1fr} .popup-preview{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="admin-shell" id="shell"></div>
+  <div id="toastHost"></div>
+
+  <script src="js/common.js?v=7"></script>
+  <script>
+    if (!requireAuth()) { throw new Error('redirect'); }
+    renderLayout('popup-sms.html');
+    document.getElementById('pageTitle').textContent = 'পপআপ SMS';
+    const content = document.getElementById('pageContent');
+
+    const defaultPopup = {
+      enabled: true,
+      badge: 'ভর্তি চলছে এখনেই',
+      headline: '40, 41 নাম্বার ব্যাচ',
+      headlineHighlight: 'এ ভর্তি চলছে',
+      sub: 'SoftVerse IT Training Center — ২০২৬',
+      batchTitle: 'ব্যাচ বিস্তারিত',
+      startDate: 'শুরুর তারিখ: 30 August, 2026',
+      time: 'সময়: সকাল / বিকেল / সন্ধ্যা ব্যাচ',
+      place: 'স্থান: মুন্সীগঞ্জ পুলিশ সুপার কার্যালয় বিপরীত পাশে',
+      courses: 'কোর্স: কম্পিউটার বেসিক, গ্রাফিক্স ডিজাইন, কিডস কম্পিউটার',
+      enrollBtn: 'এখনই আসন নিশ্চিত করুন →',
+      skipBtn: 'পরে দেখবো'
+    };
+    const state = Object.assign({}, defaultPopup);
+function renderPreview() {
+      document.getElementById('pvBadge').textContent = state.badge;
+      document.getElementById('pvHead').innerHTML = esc(state.headline) + '<br/><span style="color:#00b894">' + esc(state.headlineHighlight) + '</span>';
+      document.getElementById('pvSub').textContent = state.sub;
+      const rows = [state.startDate, state.time, state.place, state.courses].filter(Boolean);
+      document.getElementById('pvRows').innerHTML = rows.map(r => '<div class="pv-row">' + esc(r) + '</div>').join('') || '<div class="pv-row">—</div>';
+      document.getElementById('pvEnroll').textContent = state.enrollBtn;
+      document.getElementById('pvSkip').textContent = state.skipBtn;
+      document.getElementById('pvState').textContent = state.enabled ? 'পপআপ চালু' : 'পপআপ বন্ধ';
+    }
+
+    function renderPage(data) {
+      Object.assign(state, data || {});
+      content.innerHTML = `
+        <div class="card page-toolbar">
+          <div><strong>ওয়েলকাম পপআপ SMS</strong><p>ভর্তির পপআপ মেসেজের সব লেখা এখানে এডিট করুন। সংরক্ষণ করলেই ওয়েবসাইটের পপআপে রিয়েল-টাইমে দেখা যাবে।</p></div>
+          <button class="btn btn-primary" id="savePopupBtn"><i class="fa-solid fa-floppy-disk"></i> সংরক্ষণ করুন</button>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h3>পপআপ কনটেন্ট</h3></div>
+          <div class="popup-form">
+            <label class="toggle-row full">
+              <input type="checkbox" id="f-enabled" ${state.enabled ? 'checked' : ''} />
+              <span>পপআপ SMS দেখানো হবে (অন/অফ)</span>
+            </label>
+            <div class="full"><label>ব্যাজ (badge)</label><input id="f-badge" value="${esc(state.badge)}" placeholder="যেমন: ভর্তি চলছে এখনেই"/></div>
+            <div><label>হেডলাইন (মূল অংশ)</label><input id="f-headline" value="${esc(state.headline)}" placeholder="যেমন: 40, 41 নাম্বার ব্যাচ"/></div>
+            <div><label>হেডলাইন — সবুজ অংশ</label><input id="f-headlineHighlight" value="${esc(state.headlineHighlight)}" placeholder="যেমন: এ ভর্তি চলছে"/></div>
+            <div><label>সাব-টাইটেল</label><input id="f-sub" value="${esc(state.sub)}" placeholder="যেমন: SoftVerse IT Training Center — ২০২৬"/></div>
+            <div><label>ব্যাচ বিস্তারিত কার্ড টাইটেল</label><input id="f-batchTitle" value="${esc(state.batchTitle)}" placeholder="যেমন: ব্যাচ বিস্তারিত"/></div>
+            <div class="full"><label>শুরুর তারিখ</label><input id="f-startDate" value="${esc(state.startDate)}" placeholder="যেমন: শুরুর তারিখ: 30 August, 2026"/></div>
+            <div class="full"><label>সময়</label><input id="f-time" value="${esc(state.time)}" placeholder="যেমন: সময়: সকাল / বিকেল / সন্ধ্যা ব্যাচ"/></div>
+            <div class="full"><label>স্থান</label><input id="f-place" value="${esc(state.place)}" placeholder="যেমন: স্থান: মুন্সীগঞ্জ পুলিশ সুপার কার্যালয় বিপরীত পাশে"/></div>
+            <div class="full"><label>কোর্স</label><input id="f-courses" value="${esc(state.courses)}" placeholder="যেমন: কোর্স: কম্পিউটার বেসিক, গ্রাফিক্স ডিজাইন, কিডস কম্পিউটার"/></div>
+            <div><label>এনরোল বাটন</label><input id="f-enrollBtn" value="${esc(state.enrollBtn)}" placeholder="যেমন: এখনই আসন নিশ্চিত করুন →"/></div>
+            <div><label>স্কিপ বাটন</label><input id="f-skipBtn" value="${esc(state.skipBtn)}" placeholder="যেমন: পরে দেখবো"/></div>
+          </div>
+        </div>
+<div class="card">
+          <div class="card-head"><h3>লাইভ প্রিভিউ</h3><span id="pvState" style="font-size:.78rem;color:#8fafc8"></span></div>
+          <div class="popup-preview">
+            <div class="popup-preview-title">ওয়েবসাইটে পপআপ আসলে দেখতে যেমন হবে</div>
+            <div class="pv-card">
+              <div class="pv-banner">
+                <div class="pv-badge"><span style="width:6px;height:6px;border-radius:50%;background:#00b894;display:inline-block"></span><span id="pvBadge"></span></div>
+                <div id="pvHead" class="pv-head"></div>
+                <div id="pvSub" class="pv-sub"></div>
+              </div>
+              <div class="pv-body">
+                <div style="font-weight:700;color:#00b894;margin-bottom:.4rem">ব্যাচ বিস্তারিত</div>
+                <div id="pvRows"></div>
+                <div class="pv-btns">
+                  <button type="button" class="pv-enroll" id="pvEnroll"></button>
+                  <button type="button" class="pv-skip" id="pvSkip"></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.querySelectorAll('#pageContent input').forEach(inp => {
+        inp.addEventListener('input', () => { collectFromForm(); renderPreview(); });
+      });
+      document.getElementById('savePopupBtn').addEventListener('click', savePopup);
+    }
+
+    function collectFromForm() {
+      state.enabled = document.getElementById('f-enabled').checked;
+      state.badge = document.getElementById('f-badge').value.trim();
+      state.headline = document.getElementById('f-headline').value.trim();
+      state.headlineHighlight = document.getElementById('f-headlineHighlight').value.trim();
+      state.sub = document.getElementById('f-sub').value.trim();
+      state.batchTitle = document.getElementById('f-batchTitle').value.trim();
+      state.startDate = document.getElementById('f-startDate').value.trim();
+      state.time = document.getElementById('f-time').value.trim();
+      state.place = document.getElementById('f-place').value.trim();
+      state.courses = document.getElementById('f-courses').value.trim();
+      state.enrollBtn = document.getElementById('f-enrollBtn').value.trim();
+      state.skipBtn = document.getElementById('f-skipBtn').value.trim();
+    }
+
+    async function savePopup() {
+      collectFromForm();
+      try {
+        const res = await API.put('/api/site-content/popup', state);
+        Object.assign(state, res.data || state);
+        try { localStorage.setItem('sv_popup_v1', JSON.stringify(state)); } catch (_) {}
+        try { window.dispatchEvent(new CustomEvent('sv-content-updated', { detail: 'sv_popup_v1' })); } catch (_) {}
+        renderPreview();
+        toast('পপআপ SMS সংরক্ষণ হয়েছে');
+      } catch (err) {
+        toast(err.message || 'সংরক্ষণ ব্যর্থ হয়েছে', 'error');
+      }
+    }
+
+    async function load() {
+      try {
+        const cached = localStorage.getItem('sv_popup_v1');
+        if (cached) { try { Object.assign(state, JSON.parse(cached)); } catch (_) {} }
+        const res = await API.get('/api/site-content/popup');
+        Object.assign(state, res.data || {});
+        try { localStorage.setItem('sv_popup_v1', JSON.stringify(state)); } catch (_) {}
+        renderPage(state);
+        renderPreview();
+      } catch (err) {
+        content.innerHTML = '<div class="page-loader">' + esc(err.message) + '</div>';
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>

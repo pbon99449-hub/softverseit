@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Login - SoftVerse IT</title>
+  <link rel="icon" type="image/png" href="../../Images/favicon.webp"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Syne:wght@700;800&display=swap"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+  <link rel="stylesheet" href="css/admin.css"/>
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="login-page">
+    <div class="login-card">
+      <button class="login-close" id="closeBtn" title="বন্ধ করুন" aria-label="বন্ধ করুন"><i class="fa-solid fa-xmark"></i></button>
+      <div class="login-brand">
+        <div class="lb-title">SOFTVERSE <span>ADMIN</span></div>
+        <div class="lb-sub">SoftVerse IT অ্যাডমিন প্যানেলে স্বাগতম</div>
+      </div>
+      <div class="login-err" id="loginErr"></div>
+      <form id="loginForm" novalidate>
+        <div style="margin-bottom:1.1rem">
+          <label for="email">ইমেইল</label>
+          <input type="email" id="email" placeholder="admin@softverseit.com" autocomplete="email"/>
+        </div>
+        <div style="margin-bottom:1.3rem">
+          <label for="password">পাসওয়ার্ড</label>
+          <div class="pw-wrap">
+            <input type="password" id="password" placeholder="********" autocomplete="current-password"/>
+            <button type="button" class="pw-toggle" id="pwToggle" title="পাসওয়ার্ড দেখুন" aria-label="পাসওয়ার্ড দেখুন"><i class="fa-solid fa-eye" id="pwIcon"></i></button>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary" id="loginBtn">
+          <span id="btnText">লগইন করুন</span>
+          <span id="btnLoader" style="display:none" class="spinner"></span>
+        </button>
+            </form>
+      <div class="login-hint" style="margin-top:1rem;padding:.7rem .9rem;border-radius:8px;background:rgba(0,184,148,.08);border:1px solid rgba(0,184,148,.2);font-size:.8rem;color:#8fafc8">
+        <i class="fa-solid fa-shield-halved" style="color:#00b894"></i> শুধুমাত্র অনুমোদিত অ্যাডমিন প্রবেশ করতে পারবেন। সঠিক ইমেইল ও পাসওয়ার্ড দিয়ে লগইন করুন।
+      </div>
+    </div>
+  </div>
+  <div id="toastHost"></div>
+  <script src="js/common.js?v=7"></script>
+  <script>
+    const form = document.getElementById("loginForm");
+    const closeBtn = document.getElementById("closeBtn");
+    closeBtn.addEventListener("click", closePage);
+    function closePage() {
+      window.location.href = '../../index.html';
+    }
+    const errBox = document.getElementById("loginErr");
+    const btn = document.getElementById("loginBtn");
+    const btnText = document.getElementById("btnText");
+    const btnLoader = document.getElementById("btnLoader");
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      errBox.classList.remove("show");
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      if (!email || !password) { errBox.textContent = 'ইমেইল এবং পাসওয়ার্ড দিন'; errBox.classList.add('show'); return; }
+      btn.disabled = true; btnText.style.display = "none"; btnLoader.style.display = "inline-block";
+      try {
+        const res = await API.post("/api/auth/login", { email, password });
+        if (res.success) { setSession(res.token, res.admin); location.href = "index.html"; }
+        else { errBox.textContent = res.message || 'ইমেইল বা পাসওয়ার্ড ভুল'; errBox.classList.add('show'); }
+      } catch (err) { errBox.textContent = err.message || 'লগইন ব্যর্থ হয়েছে'; errBox.classList.add('show'); }
+      finally { btn.disabled = false; btnText.style.display = "inline"; btnLoader.style.display = "none"; }
+    });
+
+    // Password show/hide toggle
+    const pwInput = document.getElementById("password");
+    const pwToggle = document.getElementById("pwToggle");
+    const pwIcon = document.getElementById("pwIcon");
+    pwToggle.addEventListener("click", () => {
+      const isVisible = pwInput.type === "text";
+      pwInput.type = isVisible ? "password" : "text";
+      pwIcon.className = isVisible ? "fa-solid fa-eye" : "fa-solid fa-eye-slash";
+      pwToggle.title = isVisible ? "পাসওয়ার্ড লুকান" : "পাসওয়ার্ড দেখুন";
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+node_modules/
+admin-panel/node_modules/
+
+# Secrets - kokhono GitHub e push korben na
+.env
+admin-panel/.env
+
+# Database files (deploy-e fresh toiri hoy, local data push korar dorkar nei)
+admin-panel/data/
+
+# Logs
+*.log
+admin-panel/*.log
+
+# OS / editor files
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Broken backup files
+_backup_broken/

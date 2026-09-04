@@ -1,0 +1,2 @@
+Set WshShell = CreateObject("WScript.Shell")
+WshShell.Run "cmd /c cd /d ""C:\Users\SILICON TECH\Downloads\softverse-It-main\softverse-It-main\admin-panel"" && node server.js >> ""C:\Users\SILICON TECH\Downloads\softverse-It-main\softverse-It-main\server.log"" 2>&1", 0, False

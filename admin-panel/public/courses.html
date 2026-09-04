@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>কোর্স ম্যানেজ — SoftVerse Admin</title>
+  <link rel="icon" type="image/png" href="../../Images/favicon.webp"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Syne:wght@700;800&display=swap"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+  <link rel="stylesheet" href="css/admin.css?v=5"/>
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="admin-shell" id="shell"></div>
+  <div id="toastHost"></div>
+
+  <script src="js/common.js?v=7"></script>
+  <script>
+    if (!requireAuth()) { throw new Error('redirect'); }
+    renderLayout('courses.html');
+    document.getElementById('pageTitle').textContent = 'কোর্স ম্যানেজ';
+    const content = document.getElementById('pageContent');
+
+    const defaultCourses = [
+      { _id: 'basic', name: 'বেসিক কম্পিউটার', category: 'Computer Skills', duration: '৩ মাস', teacher: 'Abid Hasan', batch: 'সকাল / বিকেল / সন্ধ্যা', status: 'open', price: '৳ 3000', body: 'MS Office, ইন্টারনেট, ফাইল ম্যানেজমেন্ট এবং ডিজিটাল লিটারেসির সম্পূর্ণ কোর্স।', level: 'সপ্তাহে ৩ দিন ক্লাস', date: '২৯ মার্চ, ২০২৬', time: 'সকাল / বিকেল / সন্ধ্যা' },
+      { _id: 'kid', name: 'কিডস কম্পিউটার', category: 'For Kids', duration: '২ মাস', teacher: 'Abid Hasan', batch: 'বিকেল (১টা – ৩টা)', status: 'open', price: '৳ 2500', body: 'কম্পিউটার পরিচিতি, হার্ডওয়ার পরিচিতি, Ms Paint etc.', level: 'সপ্তাহে ৩ দিন ক্লাস', date: '০১ এপ্রিল, ২০২৬', time: 'বিকেল / সন্ধ্যা' },
+      { _id: 'graphic', name: 'গ্রাফিক ডিজাইন', category: 'Design', duration: '৩ মাস', teacher: 'Niloy Haldar', batch: 'সন্ধ্যা (৩টা – ৫টা)', status: 'open', price: '৳ 4500', body: 'Photoshop, Illustrator, AI ও ব্র্যান্ড আইডেন্টিটি ডিজাইনের সম্পূর্ণ গাইড।', level: 'সপ্তাহে ৩ দিন ক্লাস', date: '২৯ মার্চ, ২০২৬', time: 'সকাল / বিকেল' },
+      { _id: 'skill-boost', name: 'স্কিল বুস্ট', category: 'Skill Boost', duration: '১ মাস', teacher: 'Abid Hasan', batch: 'সন্ধ্যা (৫টা – ৭টা)', status: 'open', price: '৳ 2200', body: 'MS Office, টাইপিং etc.', level: 'সপ্তাহে ৭ দিন ক্লাস', date: '০৫ এপ্রিল, ২০২৬', time: 'সন্ধ্যা' },
+      { _id: 'ielts', name: 'IELTS প্রেক্টিস', category: 'Language', duration: '১ মাস', teacher: 'Niloy Haldar', batch: 'বিকেল (১টা – ৩টা)', status: 'open', price: '৳ 2600', body: 'টাইপিং, Software Practice', level: 'সপ্তাহে ৩ দিন ক্লাস', date: '০১ এপ্রিল, ২০২৬', time: 'বিকেল / সন্ধ্যা' },
+      { _id: 'ict-practice', name: 'ICT প্রেক্টিস', category: 'Practice', duration: '২ মাস', teacher: 'Abid Hasan', batch: 'দুপুর (১১টা – ১টা)', status: 'open', price: '৳ 3200', body: 'HTML Advance, CSS, C Language, Projects', level: 'সপ্তাহে ৩ দিন ক্লাস', date: '০৫ এপ্রিল, ২০২৬', time: 'সকাল / বিকেল' }
+    ];
+
+    async function load() {
+      try {
+        const json = await API.get('/api/courses');
+        const apiRows = Array.isArray(json.data) ? json.data : [];
+        // Merge: always show all 6 courses, API data overrides defaults
+        const merged = defaultCourses.map(def => {
+          const found = apiRows.find(a => String(a._id) === String(def._id));
+          return found ? { ...def, ...found } : def;
+        });
+        renderSection(merged);
+      } catch (err) {
+        renderSection(defaultCourses);
+      }
+    }
+
+    function renderSection(rows) {
+      const items = rows.length ? rows : defaultCourses;
+      content.innerHTML = `
+        <div class="section" id="courses">
+          <div class="sec-header reveal">
+            <div class="sec-tag"><div class="tag-line"></div> কোর্সসমূহ <div class="tag-line"></div></div>
+            <div class="brand-sep"></div>
+            <h2 class="sec-title">আপনার পথ বেছে নিন</h2>
+            <p class="sec-desc">প্রতিটি কোর্স বাস্তবমুখী প্রজেক্ট ও অভিজ্ঞ প্রশিক্ষকদের তত্ত্বাবধানে পরিচালিত।</p>
+          </div>
+          <div class="toolbar" style="margin-bottom:1.5rem;justify-content:flex-end">
+            <button class="btn btn-primary btn-sm" id="saveAllCoursesBtn"><i class="fa-solid fa-floppy-disk"></i> সেভ করুন</button>
+          </div>
+          <div class="courses-grid admin-course-grid">
+            ${items.map((r, idx) => {
+              const status = r.status === 'full' ? '⛔ আসন পূর্ণ' : r.status === 'soon' ? '🔜 শীঘ্রই আসছে' : '🟢 ভর্তি চলছে';
+              const statusClass = r.status === 'full' ? 'full' : r.status === 'soon' ? 'soon' : 'open';
+              const delayClass = idx === 1 || idx === 4 ? 'reveal-d1' : idx === 2 || idx === 5 ? 'reveal-d2' : '';
+              const title = r.name || 'কোর্স';
+              const body = r.body || 'কোর্সের বিস্তারিত তথ্য';
+              const duration = r.duration || '৩ মাস';
+              const level = r.level || 'সপ্তাহে ৩ দিন ক্লাস';
+              const date = r.date || 'শীঘ্রই শুরু হবে';
+              const time = r.time || 'সকাল / বিকেল / সন্ধ্যা';
+              return `
+                <div class="c-card reveal ${delayClass}" data-id="${esc(String(r._id || title))}">
+                  <div class="c-status ${statusClass}">${status}</div>
+                  <div class="c-title c-edit-wrap"><input class="c-edit" data-field="name" data-id="${esc(String(r._id || title))}" value="${esc(title)}" /></div>
+                  <div class="c-body"><textarea class="c-edit c-body-edit" data-field="body" data-id="${esc(String(r._id || title))}">${esc(body)}</textarea></div>
+                  <div class="c-info">
+                    <div class="c-info-row c-date">
+                      <label>শুরু:</label>
+                      <input data-field="date" data-id="${esc(String(r._id || title))}" value="${esc(date)}" />
+                    </div>
+                    <div class="c-info-row c-time">
+                      <label>সময়:</label>
+                      <input data-field="time" data-id="${esc(String(r._id || title))}" value="${esc(time)}" />
+                    </div>
+                  </div>
+                  <div class="c-footer">
+                    <span class="c-dur c-edit-wrap"><input class="c-edit" data-field="duration" data-id="${esc(String(r._id || title))}" value="${esc(duration)}" /></span>
+                    <br>
+                    <span class="c-level c-edit-wrap"><input class="c-edit" data-field="level" data-id="${esc(String(r._id || title))}" value="${esc(level)}" /></span>
+                  </div>
+                  <button class="course-enroll-btn" type="button" disabled style="opacity:.6;cursor:default"><i class="fa-solid fa-pen"></i> এডিট মোড</button>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>`;
+
+      document.getElementById('saveAllCoursesBtn').addEventListener('click', saveAllCourses);
+
+      // Reveal animation observer
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+      }, { threshold: 0.1 });
+      document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    }
+
+    async function saveAllCourses() {
+      const ids = [...new Set(Array.from(document.querySelectorAll('[data-id]')).map(el => el.dataset.id))];
+      if (!ids.length) { toast('কোনো কোর্স খুঁজে পাওয়া যায়নি', 'error'); return; }
+
+      try {
+        const current = await API.get('/api/courses');
+        const currentRows = Array.isArray(current.data) ? current.data : defaultCourses;
+        const map = new Map(currentRows.map(item => [String(item._id), item]));
+
+        const updatedRows = [];
+        for (const id of ids) {
+          const existing = map.get(id) || {};
+          const fields = ['name', 'body', 'date', 'time', 'duration', 'level'];
+          const updates = {};
+          for (const f of fields) {
+            const el = document.querySelector(`[data-field="${f}"][data-id="${CSS.escape(id)}"]`);
+            if (el) updates[f] = el.value.trim();
+          }
+          const merged = { ...existing, ...updates };
+          await API.put('/api/courses/' + id, merged);
+          updatedRows.push(merged);
+        }
+
+        // Also write to localStorage so the homepage picks up changes immediately
+        try { localStorage.setItem('sv_courses_v1', JSON.stringify(updatedRows)); } catch (_) {}
+
+        window.dispatchEvent(new CustomEvent('sv-content-updated', { detail: 'sv_courses_v1' }));
+        toast('কোর্স তথ্য সেভ হয়েছে — হোম পেজ আপডেট হবে');
+        load();
+      } catch (err) {
+        toast(err.message || 'সেভ করতে সমস্যা হয়েছে', 'error');
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>

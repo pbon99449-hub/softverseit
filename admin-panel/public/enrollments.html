@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ভর্তির আবেদন — SoftVerse Admin</title>
+  <link rel="icon" type="image/png" href="../../Images/favicon.webp"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Syne:wght@700;800&display=swap"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+  <link rel="stylesheet" href="css/admin.css"/>
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="admin-shell" id="shell"></div>
+  <div id="toastHost"></div>
+
+  <div class="modal-overlay" id="editModal">
+    <div class="modal-box">
+      <button class="modal-close" id="modalClose"><i class="fa-solid fa-xmark"></i></button>
+      <h2 id="modalTitle">ভর্তি সম্পাদনা</h2>
+      <div class="form-grid" id="editForm"></div>
+    </div>
+  </div>
+
+  <script src="js/common.js?v=7"></script>
+  <script>
+    if (!requireAuth()) { throw new Error('redirect'); }
+    renderLayout('enrollments.html');
+    document.getElementById('pageTitle').textContent = 'ভর্তির আবেদন';
+
+    const content = document.getElementById('pageContent');
+    const badgeCls = { pending: 'badge-pending', contacted: 'badge-contacted', enrolled: 'badge-enrolled', rejected: 'badge-rejected' };
+    const statusEn = { pending: 'অপেক্ষমাণ', contacted: 'যোগাযোগ হয়েছে', enrolled: 'ভর্তি সম্পন্ন', rejected: 'বাতিল' };
+    const state = { page: 1, search: '', status: '', course: '', total: 0 };
+    let editingId = null;
+
+    content.innerHTML = `
+      <div class="card">
+        <div class="card-head">
+          <h3>সকল ভর্তির আবেদন</h3>
+          <button class="btn btn-primary btn-sm" id="addBtn"><i class="fa-solid fa-plus"></i> নতুন ভর্তি</button>
+        </div>
+        <div class="toolbar" style="margin-bottom:1.1rem">
+          <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input id="searchInput" placeholder="নাম / ফোন / কোর্স দিয়ে খুঁজুন..."/></div>
+          <select id="statusFilter">
+            <option value="">সব স্ট্যাটাস</option>
+            <option value="pending">অপেক্ষমাণ</option>
+            <option value="contacted">যোগাযোগ হয়েছে</option>
+            <option value="enrolled">ভর্তি সম্পন্ন</option>
+            <option value="rejected">বাতিল</option>
+          </select>
+          <select id="courseFilter">
+            <option value="">সব কোর্স</option>
+            <option>বেসিক কম্পিউটার</option>
+            <option>কিডস কম্পিউটার</option>
+            <option>গ্রাফিক ডিজাইন</option>
+            <option>স্কিল বুস্ট</option>
+            <option>IELTS প্রেক্টিস</option>
+          </select>
+        </div>
+        <div class="table-wrap" id="tableWrap"><div class="page-loader"><span class="spinner"></span> সব আবেদন লোড হচ্ছে...</div></div>
+        <div class="pagination" id="pagination"></div>
+      </div>`;
+
+    async function load() {
+      const q = new URLSearchParams({ page: state.page, limit: 15 });
+      if (state.search) q.set('search', state.search);
+      if (state.status) q.set('status', state.status);
+      if (state.course) q.set('course', state.course);
+      try {
+        const json = await API.get('/api/enrollments?' + q.toString());
+        state.total = json.pagination.total;
+        renderTable(json.data);
+        renderPagination(json.pagination, p => { state.page = p; load(); });
+      } catch (err) {
+        tableWrap.innerHTML = '<div class="page-loader">' + esc(err.message) + '</div>';
+      }
+    }
+
+    function renderTable(rows) {
+      const wrap = document.getElementById('tableWrap');
+      if (!rows.length) { wrap.innerHTML = '<table class="data-table"><tbody><tr class="empty-row"><td>কোনো আবেদন পাওয়া যায়নি</td></tr></tbody></table>'; return; }
+      const tr = rows.map(r => `
+        <tr>
+          <td><strong>${esc(r.fullName)}</strong></td>
+          <td>${esc(r.phone)}</td>
+          <td>${esc(r.course)}</td>
+          <td>${esc(r.batch)}</td>
+          <td>
+            <select class="status-select" data-id="${r._id}" data-status="${esc(r.status)}" style="width:auto;padding:.35rem .5rem;font-size:.78rem">
+              <option value="pending" ${r.status==='pending'?'selected':''}>অপেক্ষমাণ</option>
+              <option value="contacted" ${r.status==='contacted'?'selected':''}>যোগাযোগ হয়েছে</option>
+              <option value="enrolled" ${r.status==='enrolled'?'selected':''}>ভর্তি সম্পন্ন</option>
+              <option value="rejected" ${r.status==='rejected'?'selected':''}>বাতিল</option>
+            </select>
+          </td>
+          <td>${fmtDate(r.createdAt)}</td>
+          <td>
+            <button class="icon-btn edit-btn" data-id="${r._id}" title="সম্পাদনা করুন"><i class="fa-solid fa-pen"></i></button>
+            <button class="icon-btn danger del-btn" data-id="${r._id}" title="মুছে ফেলুন"><i class="fa-solid fa-trash"></i></button>
+          </td>
+        </tr>`).join('');
+      wrap.innerHTML = `<table class="data-table"><thead><tr><th>নাম</th><th>ফোন</th><th>কোর্স</th><th>ব্যাচ</th><th>স্ট্যাটাস</th><th>তারিখ</th><th>অ্যাকশন</th></tr></thead><tbody>${tr}</tbody></table>`;
+
+      wrap.querySelectorAll('.status-select').forEach(sel => sel.addEventListener('change', async () => {
+        try { await API.patch('/api/enrollments/' + sel.dataset.id + '/status', { status: sel.value }); toast('স্ট্যাটাস আপডেট হয়েছে'); load(); }
+        catch (err) { toast(err.message, 'error'); load(); }
+      }));
+      wrap.querySelectorAll('.edit-btn').forEach(b => b.addEventListener('click', () => openEdit(b.dataset.id)));
+      wrap.querySelectorAll('.del-btn').forEach(b => b.addEventListener('click', () => del(b.dataset.id)));
+    }
+
+    // edit modal
+    const overlay = document.getElementById('editModal');
+    const editForm = document.getElementById('editForm');
+    function openEdit(id) {
+      editingId = id;
+      const all = document.querySelectorAll('tbody tr');
+      document.getElementById('modalTitle').textContent = 'ভর্তি সম্পাদনা';
+      editForm.innerHTML = `
+        <div><label>নাম *</label><input id="f-name"/></div>
+        <div><label>ফোন *</label><input id="f-phone"/></div>
+        <div><label>বয়স</label><input id="f-age"/></div>
+        <div><label>ব্যাচ *</label><input id="f-batch"/></div>
+        <div class="full"><label>কোর্স *</label><input id="f-course"/></div>
+        <div class="full"><label>দিন</label><input id="f-day"/></div>
+        <div class="full"><label>মেসেজ</label><textarea id="f-message" rows="2"></textarea></div>
+        <div class="full form-actions">
+          <button class="btn btn-ghost" id="editCancel">বাতিল</button>
+          <button class="btn btn-primary" id="editSave">সংরক্ষণ করুন</button>
+        </div>`;
+      // find the row data from last render — refetch simplest
+      API.get('/api/enrollments?limit=500').then(function(j){ loadRowIntoForm(j.data, id); });
+      overlay.classList.add('active');
+    }
+    function loadRowIntoForm(rows, id) {
+      const r = rows.find(x => x._id === id);
+      if (!r) return;
+      document.getElementById('f-name').value = r.fullName || '';
+      document.getElementById('f-phone').value = r.phone || '';
+      document.getElementById('f-age').value = r.age || '';
+      document.getElementById('f-batch').value = r.batch || '';
+      document.getElementById('f-course').value = r.course || '';
+      document.getElementById('f-day').value = r.day || '';
+      document.getElementById('f-message').value = r.message || '';
+      document.getElementById('editSave').onclick = saveEdit;
+      document.getElementById('editCancel').onclick = () => overlay.classList.remove('active');
+    }
+    async function saveEdit() {
+      const body = {
+        fullName: document.getElementById('f-name').value.trim(),
+        phone: document.getElementById('f-phone').value.trim(),
+        age: document.getElementById('f-age').value,
+        batch: document.getElementById('f-batch').value,
+        course: document.getElementById('f-course').value,
+        day: document.getElementById('f-day').value,
+        message: document.getElementById('f-message').value,
+      };
+      if (!body.fullName || !body.phone || !body.course || !body.batch) { toast('নাম, ফোন, ব্যাচ ও কোর্স অবশ্যই দিতে হবে', 'error'); return; }
+      try { await API.put('/api/enrollments/' + editingId, body); toast('ভর্তি আপডেট হয়েছে'); overlay.classList.remove('active'); load(); }
+      catch (err) { toast(err.message, 'error'); }
+    }
+    document.getElementById('modalClose').addEventListener('click', () => overlay.classList.remove('active'));
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('active'); });
+
+    // add new
+    document.getElementById('addBtn').addEventListener('click', openAdd);
+    function openAdd() {
+      editingId = null;
+      document.getElementById('modalTitle').textContent = 'নতুন ভর্তি';
+      editForm.innerHTML = `
+        <div><label>নাম *</label><input id="f-name"/></div>
+        <div><label>ফোন *</label><input id="f-phone" placeholder="01XXXXXXXXX"/></div>
+        <div><label>বয়স</label><input id="f-age"/></div>
+        <div><label>ব্যাচ *</label><input id="f-batch"/></div>
+        <div class="full"><label>কোর্স *</label><input id="f-course"/></div>
+        <div class="full"><label>দিন</label><input id="f-day"/></div>
+        <div class="full"><label>মেসেজ</label><textarea id="f-message" rows="2"></textarea></div>
+        <div class="full form-actions">
+          <button class="btn btn-ghost" id="editCancel">বাতিল</button>
+          <button class="btn btn-primary" id="editSave">সংরক্ষণ করুন</button>
+        </div>`;
+      document.getElementById('editSave').onclick = saveAdd;
+      document.getElementById('editCancel').onclick = () => overlay.classList.remove('active');
+      overlay.classList.add('active');
+    }
+    async function saveAdd() {
+      const body = {
+        fullName: document.getElementById('f-name').value.trim(),
+        phone: document.getElementById('f-phone').value.trim(),
+        age: document.getElementById('f-age').value || '—',
+        batch: document.getElementById('f-batch').value,
+        course: document.getElementById('f-course').value,
+        education: document.getElementById('f-day').value || '—',
+        message: document.getElementById('f-message').value || '—',
+      };
+      if (!body.fullName || !body.phone || !body.course || !body.batch) { toast('নাম, ফোন, ব্যাচ ও কোর্স অবশ্যই দিতে হবে', 'error'); return; }
+      try { await API.post('/api/enrollments', body); toast('নতুন ভর্তি যোগ হয়েছে'); overlay.classList.remove('active'); load(); }
+      catch (err) { toast(err.message, 'error'); }
+    }
+
+    async function del(id) {
+      if (!confirm('আপনি কি নিশ্চিত? এই আবেদনটি মুছে ফেলা হবে')) return;
+      try { await API.del('/api/enrollments/' + id); toast('আবেদন মুছে ফেলা হয়েছে'); load(); }
+      catch (err) { toast(err.message, 'error'); }
+    }
+
+    const searchInput = document.getElementById('searchInput');
+    let searchTimer;
+    searchInput.addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(() => { state.search = searchInput.value.trim(); state.page = 1; load(); }, 350); });
+    document.getElementById('statusFilter').addEventListener('change', e => { state.status = e.target.value; state.page = 1; load(); });
+    document.getElementById('courseFilter').addEventListener('change', e => { state.course = e.target.value; state.page = 1; load(); });
+
+    load();
+  </script>
+</body>
+</html>
+
