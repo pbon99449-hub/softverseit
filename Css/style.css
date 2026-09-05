@@ -699,7 +699,20 @@ nav.scrolled {
   display: flex;
   gap: 1.5rem;
   width: max-content;
-  animation: scrollReview 40s linear infinite;
+  animation: scrollReview 20s linear infinite;
+}
+
+/* drag করার সময় smoothly টানা যায় */
+.review-track-wrap {
+  touch-action: pan-y;
+  cursor: grab;
+}
+.review-track-wrap.dragging {
+  cursor: grabbing;
+}
+.review-track-wrap.dragging .review-track .t-card {
+  pointer-events: none;
+  user-select: none;
 }
 
 /* hover করলে pause */

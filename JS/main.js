@@ -1066,13 +1066,75 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowRight') { lbIndex = (lbIndex + 1) % lbItems.length; showLbSlide(); }
 });
 
-/* ── 11. REVIEW AUTO SCROLL — card clone ── */
+/* ── 11. REVIEW AUTO SCROLL — card clone + drag to scroll ── */
 const reviewTrack = document.getElementById('reviewTrack');
 if (reviewTrack) {
   /* কার্ডগুলো clone করে double করি
      যাতে scroll শেষ হলে seamless loop হয় */
   const cards = reviewTrack.innerHTML;
   reviewTrack.innerHTML = cards + cards;
+
+  /* ── Drag to scroll (mouse + touch) ──
+     CSS-এর animation duration-এর সাথে মিলিয়ে রাখতে হবে
+     (style.css → .review-track animation) */
+  const SCROLL_DURATION = 20000; /* ms — CSS-এর 20s এর সাথে sync */
+  const wrap = reviewTrack.closest('.review-track-wrap') || reviewTrack.parentElement;
+  let isDragging = false;
+  let startX = 0;
+  let startOffsetMs = 0;
+  let currentOffsetMs = 0;
+
+  /* এখন track ঠিক কতটা সরে গেছে (px) সেটা transform থেকে বের করি */
+  const getTranslateX = () => {
+    const t = window.getComputedStyle(reviewTrack).transform;
+    if (!t || t === 'none') return 0;
+    return new DOMMatrixReadOnly(t).m41;
+  };
+
+  /* animation-delay দিয়ে track-এর position সেট করি */
+  const applyOffset = () => {
+    const d = ((currentOffsetMs % SCROLL_DURATION) + SCROLL_DURATION) % SCROLL_DURATION;
+    reviewTrack.style.animationDelay = `${-d}ms`;
+  };
+
+  if (wrap) {
+    wrap.addEventListener('pointerdown', (e) => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      isDragging = true;
+      startX = e.clientX;
+      wrap.classList.add('dragging');
+      reviewTrack.style.animationPlayState = 'paused';
+      const half = reviewTrack.scrollWidth / 2;
+      currentOffsetMs = half > 0 ? (-getTranslateX() / half) * SCROLL_DURATION : 0;
+      startOffsetMs = currentOffsetMs;
+      if (wrap.setPointerCapture) {
+        try { wrap.setPointerCapture(e.pointerId); } catch (_) {}
+      }
+    });
+
+    wrap.addEventListener('pointermove', (e) => {
+      if (!isDragging) return;
+      const half = reviewTrack.scrollWidth / 2;
+      if (!half) return;
+      const deltaPx = e.clientX - startX;
+      /* বাঁ দিকে টানলে track সামনে এগোয় (auto-scroll এর দিকেই) */
+      currentOffsetMs = startOffsetMs - (deltaPx / half) * SCROLL_DURATION;
+      applyOffset();
+    });
+
+    const endDrag = () => {
+      if (!isDragging) return;
+      isDragging = false;
+      wrap.classList.remove('dragging');
+      /* delay রেখে animation আবার চালু — hover pause CSS নিজেই সামলাবে */
+      reviewTrack.style.animationPlayState = '';
+    };
+
+    wrap.addEventListener('pointerup', endDrag);
+    wrap.addEventListener('pointercancel', endDrag);
+    /* টেনে টেক্সট/ছবি সিলেক্ট বা ড্র্যাগ হওয়া আটকাই */
+    wrap.addEventListener('dragstart', (e) => e.preventDefault());
+  }
 }
 
 /* ── YouTube Lazy Load ── */
