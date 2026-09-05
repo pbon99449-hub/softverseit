@@ -11,6 +11,7 @@ const SiteContent = defineModel({
     gallery: [],
     ticker: [],
     heroChip: '',
+    footer: {},
     popup: {},
   },
 });

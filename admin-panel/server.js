@@ -10,6 +10,7 @@ const courseRoutes = require('./routes/courseRoutes');
 const resultRoutes = require('./routes/resultRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const siteContentRoutes = require('./routes/siteContentRoutes');
+const backupRoutes = require('./routes/backupRoutes');
 const visitRoutes = require('./routes/visitRoutes');
 
 const app = express();
@@ -61,6 +62,7 @@ app.use('/api/courses', courseRoutes);
 app.use('/api/results', resultRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/site-content', siteContentRoutes);
+app.use('/api/backup', backupRoutes);
 app.use('/api/visits', visitRoutes);
 
 app.get('/api/health', (req, res) => res.json({ success: true, message: 'API is running' }));
@@ -106,6 +108,7 @@ const JWT_SECRET = require('./config/secret');
 const PROTECTED_ADMIN_PAGES = new Set([
   'index.html', 'dashboard.html', 'courses.html', 'enrollments.html',
   'results.html', 'site-content.html', 'popup-sms.html', 'register.html',
+  'footer.html', 'backup.html',
 ]);
 
 function adminSessionToken(req) {
@@ -139,7 +142,7 @@ app.use('/admin', (req, res, next) => {
 // Explicit admin page routes — these can NEVER "Cannot GET"
 // login.html-ও এখানে cookie clear করে দেখানো হয় — যাতে লগইন পেজে থাকা
 // অবস্থায় পুরনো সেশন কাজে না লাগে; সাবমিট করলেই নতুন সেশন তৈরি হবে।
-const ADMIN_PAGES = ['register.html', 'index.html', 'dashboard.html', 'courses.html', 'enrollments.html', 'results.html', 'site-content.html', 'popup-sms.html'];
+const ADMIN_PAGES = ['register.html', 'index.html', 'dashboard.html', 'courses.html', 'enrollments.html', 'results.html', 'site-content.html', 'popup-sms.html', 'footer.html', 'backup.html'];
 app.get('/admin/login.html', (req, res) => {
   res.setHeader('Set-Cookie', CLEAR_SESSION_COOKIE);
   res.sendFile(path.join(ADMIN_PUBLIC, 'login.html'));

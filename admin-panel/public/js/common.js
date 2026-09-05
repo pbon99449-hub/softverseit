@@ -146,6 +146,8 @@ function esc(str) {
 const NAV_ITEMS = [
   { href: 'index.html', icon: 'fa-solid fa-gauge-high', label: 'ড্যাশবোর্ড' },
   { href: 'site-content.html', icon: 'fa-solid fa-house-chimney', label: 'হোম পেজ কনটেন্ট' },
+  { href: 'footer.html', icon: 'fa-solid fa-window-maximize', label: 'ফুটার এডিট' },
+  { href: 'backup.html', icon: 'fa-solid fa-database', label: 'ব্যাকআপ / রিস্টোর' },
   { href: 'courses.html', icon: 'fa-solid fa-book-open', label: 'কোর্স ম্যানেজ' },
   { href: 'enrollments.html', icon: 'fa-solid fa-users', label: 'ভর্তির আবেদন' },
   { href: 'results.html', icon: 'fa-solid fa-file-lines', label: 'রেজাল্ট ম্যানেজ' },
@@ -415,6 +417,22 @@ function localBackend(path, method, body) {
     return { status: 200, json: { success: true, data: { totalEnrollments, pendingEnrollments, enrolledCount, monthEnrollments, totalResults, passCount, failCount, coursesCount: courses.length, teachersCount: teachers.length, courseBreakdown, recentEnrollments, recentResults } } };
   }
 
+  const defaultFooterObj = {
+    about: 'বিশ্বস্ত কম্পিউটার ট্রেনিং সেন্টার। আমরা বিগত ২০২৩ সাল ২+ বছর ধরে শত শিক্ষার্থীকে কম্পিউটার প্রশিক্ষন দিয়ে।',
+    link1Title: 'SV-Tech Zone',
+    link1Url: 'https://www.facebook.com/share/18QPiHwUnt/?mibextid=wwXIfr',
+    link2Title: 'SV-Advanture',
+    link2Url: 'https://www.facebook.com/share/1CVe7s24fR/?mibextid=wwXIfr',
+    link3Title: 'Gift Managment',
+    link3Url: '#',
+    address: 'মুগন্সীঞ্জ পুলিশ সুপার কার্যালয় বিপরীত পাশে',
+    phone: '016038-93912',
+    email: 'softversei@gmail.com',
+    copyright: '© 2026 SoftVerse IT Computer Training Center।',
+    facebookUrl: 'https://www.facebook.com/share/15eAhfq3ayS/?mibextid=wwXIfr',
+    youtubeUrl: 'https://www.youtube.com/@SoftverseITInstitute',
+  };
+
   if (path === '/api/site-content' && method === 'GET') {
     const item = localStorage.getItem('sv_site_content_v1');
     const defaultContent = {
@@ -441,6 +459,7 @@ function localBackend(path, method, body) {
         { title: 'সার্টিফিকেট অনুষ্ঠান', category: 'graduation', src: './Images/program pi/program.webp' },
       ],
       heroChip: '30 july — নতুন ব্যাচ শুরু',
+      footer: defaultFooterObj,
     };
     let data = defaultContent;
     if (item) {
@@ -453,9 +472,11 @@ function localBackend(path, method, body) {
     const payload = body || {};
     // heroChip রিকোয়েস্টে না এলে আগের সেভ করা মান (বা ডিফল্ট) অপরিবর্তিত থাকে
     let prevHeroChip = '30 july — নতুন ব্যাচ শুরু';
+    let prevFooter = null;
     try {
       const prev = JSON.parse(localStorage.getItem('sv_site_content_v1') || 'null');
       if (prev && typeof prev.heroChip === 'string') prevHeroChip = prev.heroChip;
+      if (prev && prev.footer && typeof prev.footer === 'object') prevFooter = prev.footer;
     } catch (_) {}
     const normalized = {
       stats: Array.isArray(payload.stats) ? payload.stats : [],
@@ -463,9 +484,42 @@ function localBackend(path, method, body) {
       videos: Array.isArray(payload.videos) ? payload.videos : [],
       gallery: Array.isArray(payload.gallery) ? payload.gallery : [],
       heroChip: typeof payload.heroChip === 'string' ? payload.heroChip.trim() : prevHeroChip,
+      footer: (payload.footer && typeof payload.footer === 'object') ? payload.footer : (prevFooter || defaultFooterObj),
     };
     localStorage.setItem('sv_site_content_v1', JSON.stringify(normalized));
     return { status: 200, json: { success: true, data: normalized } };
+  }
+
+  // ── Backup / Restore (offline fallback) ──
+  if (path === '/api/backup' && method === 'GET') {
+    if (!liveAdmin()) return { status: 401, json: { success: false, message: 'Not authorized' } };
+    const read = (key) => { try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch (_) { return []; } };
+    const data = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      courses: read(LS.courses),
+      enrollments: read(LS.enrollments),
+      results: read(LS.results),
+      visits: read(LS.visits),
+      admins: read(LS.admins),
+    };
+    const sc = localStorage.getItem('sv_site_content_v1');
+    if (sc) { try { data.siteContent = JSON.parse(sc); } catch (_) {} }
+    return { status: 200, json: { success: true, data } };
+  }
+  if (path === '/api/backup/restore' && method === 'POST') {
+    if (!liveAdmin()) return { status: 401, json: { success: false, message: 'Not authorized' } };
+    const d = body || {};
+    const write = (key, items) => localStorage.setItem(key, JSON.stringify(Array.isArray(items) ? items : []));
+    write(LS.courses, d.courses);
+    write(LS.enrollments, d.enrollments);
+    write(LS.results, d.results);
+    write(LS.visits, d.visits);
+    if (Array.isArray(d.admins) && d.admins.length) write(LS.admins, d.admins);
+    if (d.siteContent && typeof d.siteContent === 'object') {
+      localStorage.setItem('sv_site_content_v1', JSON.stringify(d.siteContent));
+    }
+    return { status: 200, json: { success: true, message: 'Backup restored successfully' } };
   }
 
   // ── Popup SMS (welcome modal) ──

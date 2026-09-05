@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ফুটার এডিট — SoftVerse Admin</title>
+  <link rel="icon" type="image/png" href="../../Images/favicon.webp"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Syne:wght@700;800&display=swap"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+  <link rel="stylesheet" href="css/admin.css"/>
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="admin-shell" id="shell"></div>
+  <div id="toastHost"></div>
+
+  <script src="js/common.js?v=7"></script>
+  <script>
+    if (!requireAuth()) { throw new Error('redirect'); }
+    renderLayout('footer.html');
+    document.getElementById('pageTitle').textContent = 'ফুটার এডিট';
+    const content = document.getElementById('pageContent');
+
+    const state = { footer: {} };
+
+    // ফুটারের যেসব অংশ অ্যাডমিন প্যানেল থেকে বদলানো যাবে
+    const FIELDS = [
+      { key: 'about',        label: 'ফুটারের বর্ণনা (ব্র্যান্ড লোগোর নিচের লেখা)', type: 'textarea' },
+      { key: 'link1Title',   label: 'লিংক ১ — নাম (যেমন: SV-Tech Zone)' },
+      { key: 'link1Url',     label: 'লিংক ১ — URL' },
+      { key: 'link2Title',   label: 'লিংক ২ — নাম (যেমন: SV-Advanture)' },
+      { key: 'link2Url',     label: 'লিংক ২ — URL' },
+      { key: 'link3Title',   label: 'লিংক ৩ — নাম (যেমন: Gift Managment)' },
+      { key: 'link3Url',     label: 'লিংক ৩ — URL' },
+      { key: 'address',      label: 'ঠিকানা (যোগাযোগ কলামে)' },
+      { key: 'phone',        label: 'ফোন নম্বর (ক্লিক করলে কল যাবে)' },
+      { key: 'email',        label: 'ইমেইল (ক্লিক করলে মেইল যাবে)' },
+      { key: 'facebookUrl',  label: 'Facebook পেজের লিংক (নিচের f বাটন)' },
+      { key: 'youtubeUrl',   label: 'YouTube চ্যানেলের লিংক (নিচের ▶ বাটন)' },
+      { key: 'copyright',    label: 'কপিরাইট লেখা (সবার নিচের বার)' },
+    ];
+
+    function renderPage() {
+      content.innerHTML = `
+        <div class="card page-toolbar">
+          <div><strong>ফুটার এডিট</strong><p>ওয়েবসাইটের নিচের ফুটারের লেখা ও লিংকগুলো এখান থেকে বদলান। সংরক্ষণ করলে হোমপেজে রিয়েল-টাইমে দেখাবে।</p></div>
+          <button class="btn btn-primary" id="saveFooterBtn"><i class="fa-solid fa-floppy-disk"></i> সংরক্ষণ করুন</button>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <h3>ফুটার কনটেন্ট</h3>
+          </div>
+          <div class="stack-list">
+            ${FIELDS.map((f) => `
+              <div class="mini-form" style="grid-template-columns: 1fr;">
+                <label style="font-size:.8rem;color:#8fafc8;">${esc(f.label)}</label>
+                ${f.type === 'textarea'
+                  ? `<textarea data-key="${f.key}" rows="3">${esc(state.footer[f.key] || '')}</textarea>`
+                  : `<input data-key="${f.key}" value="${esc(state.footer[f.key] || '')}"/>`}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+
+      const btn = document.getElementById('saveFooterBtn');
+      if (btn) btn.addEventListener('click', saveFooter);
+    }
+
+    function collectCurrentState() {
+      FIELDS.forEach((f) => {
+        const el = content.querySelector(`[data-key="${f.key}"]`);
+        state.footer[f.key] = el ? el.value.trim() : (state.footer[f.key] || '');
+      });
+    }
+
+    async function saveFooter() {
+      collectCurrentState();
+      try {
+        const res = await API.put('/api/site-content', { footer: state.footer });
+        if (res.data && res.data.footer) state.footer = res.data.footer;
+        // ক্যাশ আপডেট — হোমপেজ রিয়েল-টাইমে নতুন ফুটার দেখাবে
+        try {
+          const merged = JSON.parse(localStorage.getItem('sv_site_content_v1') || '{}');
+          merged.footer = state.footer;
+          localStorage.setItem('sv_site_content_v1', JSON.stringify(merged));
+          window.dispatchEvent(new CustomEvent('sv-content-updated', { detail: 'sv_site_content_v1' }));
+        } catch (_) {}
+        toast('ফুটার সংরক্ষণ হয়েছে');
+        load();
+      } catch (err) {
+        toast(err.message || 'সংরক্ষণ ব্যর্থ হয়েছে', 'error');
+      }
+    }
+
+    async function load() {
+      try {
+        const cached = localStorage.getItem('sv_site_content_v1');
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached);
+            if (parsed && parsed.footer) state.footer = parsed.footer;
+          } catch (_) {}
+        }
+        const res = await API.get('/api/site-content');
+        if (res.data && res.data.footer) state.footer = res.data.footer;
+        try { localStorage.setItem('sv_site_content_v1', JSON.stringify(res.data || {})); } catch (_) {}
+        renderPage();
+      } catch (err) {
+        content.innerHTML = '<div class="page-loader">' + esc(err.message) + '</div>';
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>

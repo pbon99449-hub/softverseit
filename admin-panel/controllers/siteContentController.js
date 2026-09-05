@@ -50,6 +50,21 @@ function defaultSiteContent() {
       ' কোর্স শেষে সার্টিফিকেট প্রদান করা হয়',
     ],
     heroChip: '30 july — নতুন ব্যাচ শুরু',
+    footer: {
+      about: 'বিশ্বস্ত কম্পিউটার ট্রেনিং সেন্টার। আমরা বিগত ২০২৩ সাল ২+ বছর ধরে শত শিক্ষার্থীকে কম্পিউটার প্রশিক্ষন দিয়ে।',
+      link1Title: 'SV-Tech Zone',
+      link1Url: 'https://www.facebook.com/share/18QPiHwUnt/?mibextid=wwXIfr',
+      link2Title: 'SV-Advanture',
+      link2Url: 'https://www.facebook.com/share/1CVe7s24fR/?mibextid=wwXIfr',
+      link3Title: 'Gift Managment',
+      link3Url: '#',
+      address: 'মুগন্সীঞ্জ পুলিশ সুপার কার্যালয় বিপরীত পাশে',
+      phone: '016038-93912',
+      email: 'softversei@gmail.com',
+      copyright: '© 2026 SoftVerse IT Computer Training Center।',
+      facebookUrl: 'https://www.facebook.com/share/15eAhfq3ayS/?mibextid=wwXIfr',
+      youtubeUrl: 'https://www.youtube.com/@SoftverseITInstitute',
+    },
     popup: defaultPopup(),
   };
 }
@@ -63,6 +78,16 @@ function normalizeVideoId(raw) {
 
   const urlMatch = value.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/))([A-Za-z0-9_-]{11})/);
   return urlMatch ? urlMatch[1] : '';
+}
+
+function sanitizeFooter(value) {
+  const fallback = defaultSiteContent().footer;
+  const input = value && typeof value === 'object' ? value : {};
+  const out = {};
+  Object.keys(fallback).forEach((key) => {
+    out[key] = typeof input[key] === 'string' && input[key].trim() ? input[key].trim() : fallback[key];
+  });
+  return out;
 }
 
 function sanitizeSiteContent(value) {
@@ -85,6 +110,8 @@ function sanitizeSiteContent(value) {
     ticker: Array.isArray(input.ticker) ? input.ticker.map(item => String(item || '').trim()).filter(Boolean) : fallback.ticker,
     // ব্যানারের নিচের live-chip লেখা — ফাঁকা স্ট্রিং দিলে চিপটি হোমপেজে লুকানো থাকবে
     heroChip: typeof input.heroChip === 'string' ? input.heroChip.trim() : fallback.heroChip,
+    // ফুটার (হোমপেজের নিচের অংশ) — অ্যাডমিন প্যানেলের "ফুটার এডিট" পেজ থেকে বদলানো যায়
+    footer: sanitizeFooter(input.footer),
     popup: sanitizePopup(input.popup),
   };
 }
@@ -147,7 +174,7 @@ async function updateSiteContent(req, res) {
     const existing = await SiteContent.findOne().lean();
     const base = existing || defaultSiteContent();
     const merged = {};
-    ['stats', 'reviews', 'videos', 'gallery', 'ticker', 'heroChip', 'popup'].forEach((key) => {
+    ['stats', 'reviews', 'videos', 'gallery', 'ticker', 'heroChip', 'footer', 'popup'].forEach((key) => {
       merged[key] = body[key] !== undefined ? body[key] : base[key];
     });
     const payload = sanitizeSiteContent(merged);

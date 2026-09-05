@@ -246,6 +246,22 @@ const DEFAULT_SITE_CONTENT = {
     ' কোর্স শেষে সার্টিফিকেট প্রদান করা হয়',
   ],
   heroChip: '30 july — নতুন ব্যাচ শুরু',
+  // ফুটার — অ্যাডমিন প্যানেলের "ফুটার এডিট" পেজ থেকে বদলানো যায়
+  footer: {
+    about: 'বিশ্বস্ত কম্পিউটার ট্রেনিং সেন্টার। আমরা বিগত ২০২৩ সাল ২+ বছর ধরে শত শিক্ষার্থীকে কম্পিউটার প্রশিক্ষন দিয়ে।',
+    link1Title: 'SV-Tech Zone',
+    link1Url: 'https://www.facebook.com/share/18QPiHwUnt/?mibextid=wwXIfr',
+    link2Title: 'SV-Advanture',
+    link2Url: 'https://www.facebook.com/share/1CVe7s24fR/?mibextid=wwXIfr',
+    link3Title: 'Gift Managment',
+    link3Url: '#',
+    address: 'মুগন্সীঞ্জ পুলিশ সুপার কার্যালয় বিপরীত পাশে',
+    phone: '016038-93912',
+    email: 'softversei@gmail.com',
+    copyright: '© 2026 SoftVerse IT Computer Training Center।',
+    facebookUrl: 'https://www.facebook.com/share/15eAhfq3ayS/?mibextid=wwXIfr',
+    youtubeUrl: 'https://www.youtube.com/@SoftverseITInstitute',
+  },
 };
 
 function normalizeYouTubeId(raw) {
@@ -267,6 +283,7 @@ function normalizeSiteContent(data) {
   const gallery = Array.isArray(source.gallery) ? source.gallery : DEFAULT_SITE_CONTENT.gallery;
   const ticker = Array.isArray(source.ticker) ? source.ticker : DEFAULT_SITE_CONTENT.ticker;
   const heroChip = typeof source.heroChip === 'string' ? source.heroChip.trim() : DEFAULT_SITE_CONTENT.heroChip;
+  const footer = normalizeFooter(source.footer);
 
   return {
     stats: stats.length ? stats : DEFAULT_SITE_CONTENT.stats,
@@ -282,7 +299,19 @@ function normalizeSiteContent(data) {
     gallery: gallery.length ? gallery : DEFAULT_SITE_CONTENT.gallery,
     ticker: (ticker.length ? ticker : DEFAULT_SITE_CONTENT.ticker).map(item => String(item || '').trim()).filter(Boolean),
     heroChip,
+    footer,
   };
+}
+
+// ফুটারের প্রতিটা ফিল্ড — অ্যাডমিনের দেওয়া লেখা না থাকলে ডিফল্ট লেখা
+function normalizeFooter(input) {
+  const defaults = DEFAULT_SITE_CONTENT.footer;
+  const source = (input && typeof input === 'object') ? input : {};
+  const out = {};
+  Object.keys(defaults).forEach((key) => {
+    out[key] = (typeof source[key] === 'string' && source[key].trim()) ? source[key].trim() : defaults[key];
+  });
+  return out;
 }
 
 // ── স্ট্যাটিস count-up অ্যানিমেশন ──
@@ -325,6 +354,8 @@ function renderSiteContent(content) {
   const siteContent = normalizeSiteContent(content || DEFAULT_SITE_CONTENT);
 
   renderTicker(siteContent.ticker);
+
+  renderFooter(siteContent.footer);
 
   // ব্যানারের নিচের live-chip — অ্যাডমিন প্যানেলের "হোম পেজ কনটেন্ট" পেজ থেকে
   // এডিট + স্থায়ীভাবে সেভ করা যায় (site content-এর "heroChip" ফিল্ড)।
@@ -486,6 +517,46 @@ function renderTicker(items) {
     .join('');
 }
 renderTicker(tickerItems);
+
+/* ── FOOTER — অ্যাডমিন প্যানেলের "ফুটার এডিট" পেজ থেকে রিয়েল-টাইমে আপডেট হয় ── */
+function renderFooter(footer) {
+  const f = footer || {};
+  const setEl = (id, apply) => {
+    const el = document.getElementById(id);
+    if (el) apply(el);
+  };
+  const setText = (id, text) => { if (text) setEl(id, (el) => { el.textContent = text; }); };
+
+  setText('footerAbout', f.about);
+  setText('footerCopyright', f.copyright);
+  setText('footerAddressText', f.address);
+
+  // লিংক কলাম ("আমাদের আরো কিছু পেইজ")
+  [[1, 'footerLink1'], [2, 'footerLink2'], [3, 'footerLink3']].forEach(([n, id]) => {
+    const title = f['link' + n + 'Title'];
+    const url = f['link' + n + 'Url'];
+    setEl(id, (el) => {
+      if (title) el.textContent = title;
+      el.setAttribute('href', url || '#');
+    });
+  });
+
+  // ফোন — লেখা + tel: লিংক (ক্লিক করলে কল যাবে)
+  if (f.phone) {
+    setText('footerPhoneText', f.phone);
+    setEl('footerPhone', (el) => el.setAttribute('href', 'tel:' + String(f.phone).replace(/[^0-9+]/g, '')));
+  }
+
+  // ইমেইল — লেখা + mailto: লিংক (ক্লিক করলে মেইল যাবে)
+  if (f.email) {
+    setText('footerEmailText', f.email);
+    setEl('footerEmail', (el) => el.setAttribute('href', 'mailto:' + f.email));
+  }
+
+  // সোশ্যাল বাটন
+  if (f.facebookUrl) setEl('footerFacebook', (el) => el.setAttribute('href', f.facebookUrl));
+  if (f.youtubeUrl) setEl('footerYoutube', (el) => el.setAttribute('href', f.youtubeUrl));
+}
 
 /* ── 1. NAVBAR SCROLL ── */
 const nav = document.getElementById('navbar');

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ব্যাকআপ / রিস্টোর — SoftVerse Admin</title>
+  <link rel="icon" type="image/png" href="../../Images/favicon.webp"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Syne:wght@700;800&display=swap"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+  <link rel="stylesheet" href="css/admin.css"/>
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="admin-shell" id="shell"></div>
+  <div id="toastHost"></div>
+
+  <script src="js/common.js?v=7"></script>
+  <script>
+    if (!requireAuth()) { throw new Error('redirect'); }
+    renderLayout('backup.html');
+    document.getElementById('pageTitle').textContent = 'ব্যাকআপ / রিস্টোর';
+    const content = document.getElementById('pageContent');
+
+    content.innerHTML = `
+      <div class="card page-toolbar">
+        <div>
+          <strong>ডাটা ব্যাকআপ ও রিস্টোর</strong>
+          <p>Render-এর মতো হোস্টিং-এ নতুন deploy দিলে সার্ভারের ডাটাবেজ মুছে যেতে পারে। তাই deploy দেওয়ার <b>আগে</b> ব্যাকআপ ডাউনলোড করে রাখুন, deploy হওয়ার <b>পরে</b> সেই ফাইল আপলোড করলেই সব ডাটা ফিরে আসবে।</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3>১) ব্যাকআপ ডাউনলোড</h3>
+        </div>
+        <p style="color:#8fafc8;font-size:.9rem;line-height:1.7;">
+          কোর্স, ভর্তির আবেদন, রেজাল্ট, সাইট কনটেন্ট (টিকার/পপআপ/ফুটারসহ) — সব একটা JSON ফাইলে ডাউনলোড হবে।
+          <br/><b style="color:#e0a94f;">⚠️ এই ফাইলে অ্যাডমিন পাসওয়ার্ডের এনক্রিপ্টেড হ্যাশও থাকে — কারো সাথে শেয়ার করবেন না।</b>
+        </p>
+        <button class="btn btn-primary" id="downloadBackupBtn"><i class="fa-solid fa-download"></i> ব্যাকআপ ডাউনলোড করুন</button>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3>২) ব্যাকআপ রিস্টোর (আপলোড)</h3>
+        </div>
+        <p style="color:#8fafc8;font-size:.9rem;line-height:1.7;">
+          আগে নেওয়া ব্যাকআপ ফাইল আপলোড করলে সব ডাটা ফিরে আসবে।
+          <b style="color:#e07a5f;">⚠️ সাবধান: বর্তমানের সব ডাটা মুছে ব্যাকআপের ডাটা বসে যাবে।</b>
+        </p>
+        <input type="file" id="restoreFile" accept=".json,application/json" style="display:none"/>
+        <button class="btn btn-primary" id="restoreBtn"><i class="fa-solid fa-upload"></i> ব্যাকআপ ফাইল বেছে নিন</button>
+        <span id="restoreStatus" style="margin-left:.8rem;color:#8fafc8;font-size:.85rem;"></span>
+      </div>
+    `;
+
+    // ── ব্যাকআপ ডাউনলোড ──
+    document.getElementById('downloadBackupBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('downloadBackupBtn');
+      btn.disabled = true;
+      try {
+        const res = await API.get('/api/backup');
+        const blob = new Blob([JSON.stringify(res.data || {}, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        const d = new Date();
+        a.href = URL.createObjectURL(blob);
+        a.download = 'softverse-backup-' + d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') + '.json';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+        toast('ব্যাকআপ ফাইল ডাউনলোড হয়েছে — নিরাপদে রাখুন');
+      } catch (err) {
+        toast(err.message || 'ব্যাকআপ নিতে ব্যর্থ', 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    // ── ব্যাকআপ রিস্টোর ──
+    const fileInput = document.getElementById('restoreFile');
+    document.getElementById('restoreBtn').addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', async () => {
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) return;
+      const statusEl = document.getElementById('restoreStatus');
+      statusEl.textContent = 'ফাইল পড়া হচ্ছে...';
+      const reader = new FileReader();
+      reader.onload = async () => {
+        let payload;
+        try { payload = JSON.parse(String(reader.result || '')); }
+        catch (_) { statusEl.textContent = ''; toast('এটা সঠিক ব্যাকআপ ফাইল না (JSON না)', 'error'); return; }
+        if (!payload || typeof payload !== 'object') { statusEl.textContent = ''; toast('ভাঙা ব্যাকআপ ফাইল', 'error'); return; }
+        if (!confirm('সত্যিই রিস্টোর করবেন? বর্তমানের সব ডাটা মুছে ব্যাকআপের ডাটা বসে যাবে।')) {
+          statusEl.textContent = '';
+          fileInput.value = '';
+          return;
+        }
+        statusEl.textContent = 'রিস্টোর হচ্ছে...';
+        try {
+          const res = await API.post('/api/backup/restore', payload);
+          const c = (res && res.data) || {};
+          const parts = [];
+          Object.keys(c).forEach((k) => { if (typeof c[k] === 'number') parts.push(k + ': ' + c[k]); });
+          statusEl.textContent = '';
+          toast('রিস্টোর সম্পন্ন! ' + (parts.length ? '(' + parts.join(', ') + ')' : ''));
+        } catch (err) {
+          statusEl.textContent = '';
+          toast(err.message || 'রিস্টোর ব্যর্থ', 'error');
+        } finally {
+          fileInput.value = '';
+        }
+      };
+      reader.onerror = () => { statusEl.textContent = ''; toast('ফাইল পড়া গেল না', 'error'); };
+      reader.readAsText(file);
+    });
+  </script>
+</body>
+</html>
