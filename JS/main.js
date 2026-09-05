@@ -245,6 +245,7 @@ const DEFAULT_SITE_CONTENT = {
     ' মুন্সীগঞ্জ পুলিশ সুপার কার্যালয়ের বিপরীত পাশে',
     ' কোর্স শেষে সার্টিফিকেট প্রদান করা হয়',
   ],
+  heroChip: '30 july — নতুন ব্যাচ শুরু',
 };
 
 function normalizeYouTubeId(raw) {
@@ -265,6 +266,7 @@ function normalizeSiteContent(data) {
   const videos = Array.isArray(source.videos) ? source.videos : DEFAULT_SITE_CONTENT.videos;
   const gallery = Array.isArray(source.gallery) ? source.gallery : DEFAULT_SITE_CONTENT.gallery;
   const ticker = Array.isArray(source.ticker) ? source.ticker : DEFAULT_SITE_CONTENT.ticker;
+  const heroChip = typeof source.heroChip === 'string' ? source.heroChip.trim() : DEFAULT_SITE_CONTENT.heroChip;
 
   return {
     stats: stats.length ? stats : DEFAULT_SITE_CONTENT.stats,
@@ -279,6 +281,7 @@ function normalizeSiteContent(data) {
     }),
     gallery: gallery.length ? gallery : DEFAULT_SITE_CONTENT.gallery,
     ticker: (ticker.length ? ticker : DEFAULT_SITE_CONTENT.ticker).map(item => String(item || '').trim()).filter(Boolean),
+    heroChip,
   };
 }
 
@@ -322,6 +325,19 @@ function renderSiteContent(content) {
   const siteContent = normalizeSiteContent(content || DEFAULT_SITE_CONTENT);
 
   renderTicker(siteContent.ticker);
+
+  // ব্যানারের নিচের live-chip — অ্যাডমিন প্যানেলের "হোম পেজ কনটেন্ট" পেজ থেকে
+  // এডিট + স্থায়ীভাবে সেভ করা যায় (site content-এর "heroChip" ফিল্ড)।
+  // ফাঁকা রাখলে চিপটি লুকানো থাকবে।
+  const heroChipEl = document.querySelector('.hero .live-chip');
+  if (heroChipEl) {
+    if (siteContent.heroChip) {
+      heroChipEl.style.display = '';
+      heroChipEl.innerHTML = '<span class="live-dot"></span> ' + escapeHtml(siteContent.heroChip);
+    } else {
+      heroChipEl.style.display = 'none';
+    }
+  }
 
   const statsWrap = document.querySelector('.stats');
   // স্ট্যাট সেকশন — ০ থেকে অ্যানিমেট (count-up) হয়ে অ্যাডমিনের সেট করা সংখ্যায় পৌঁছাবে।

@@ -49,6 +49,7 @@ function defaultSiteContent() {
       ' মুন্সীগঞ্জ পুলিশ সুপার কার্যালয়ের বিপরীত পাশে',
       ' কোর্স শেষে সার্টিফিকেট প্রদান করা হয়',
     ],
+    heroChip: '30 july — নতুন ব্যাচ শুরু',
     popup: defaultPopup(),
   };
 }
@@ -82,6 +83,8 @@ function sanitizeSiteContent(value) {
     }) : fallback.videos,
     gallery: Array.isArray(input.gallery) ? input.gallery.filter(item => item && (item.title || item.src)).map(item => ({ title: String(item.title || ''), category: String(item.category || 'batch'), src: String(item.src || '') })) : fallback.gallery,
     ticker: Array.isArray(input.ticker) ? input.ticker.map(item => String(item || '').trim()).filter(Boolean) : fallback.ticker,
+    // ব্যানারের নিচের live-chip লেখা — ফাঁকা স্ট্রিং দিলে চিপটি হোমপেজে লুকানো থাকবে
+    heroChip: typeof input.heroChip === 'string' ? input.heroChip.trim() : fallback.heroChip,
     popup: sanitizePopup(input.popup),
   };
 }
@@ -144,7 +147,7 @@ async function updateSiteContent(req, res) {
     const existing = await SiteContent.findOne().lean();
     const base = existing || defaultSiteContent();
     const merged = {};
-    ['stats', 'reviews', 'videos', 'gallery', 'ticker', 'popup'].forEach((key) => {
+    ['stats', 'reviews', 'videos', 'gallery', 'ticker', 'heroChip', 'popup'].forEach((key) => {
       merged[key] = body[key] !== undefined ? body[key] : base[key];
     });
     const payload = sanitizeSiteContent(merged);

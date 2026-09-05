@@ -27,7 +27,8 @@
       reviews: [],
       videos: [],
       gallery: [],
-      ticker: []
+      ticker: [],
+      heroChip: ''
     };
 
     const state = { ...defaultState };
@@ -111,6 +112,21 @@
       `;
     }
 
+    function renderHeroChipEditor() {
+      return `
+        <div class="card">
+          <div class="card-head">
+            <h3>ব্যানারের নিচের লেখা (লাইভ চিপ)</h3>
+          </div>
+          <div class="stack-list">
+            <div class="mini-form">
+              <input id="heroChipInput" value="${esc(state.heroChip || '')}" placeholder="যেমন: 30 july — নতুন ব্যাচ শুরু (ফাঁকা রাখলে চিপটি হোমপেজে লুকাবে)"/>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
     function renderTickerEditor() {
       return `
         <div class="card">
@@ -134,6 +150,7 @@
           <div><strong>হোম পেজ কনটেন্ট ম্যানেজ</strong><p>এই কনটেন্টগুলো ওয়েবসাইটের হোমপেজে রিয়েল-টাইমে দেখানো হবে।</p></div>
           <button class="btn btn-primary" id="saveContentBtn"><i class="fa-solid fa-floppy-disk"></i> সংরক্ষণ করুন</button>
         </div>
+        ${renderHeroChipEditor()}
         ${renderTickerEditor()}
         ${renderStatsEditor()}
         ${renderReviewsEditor()}
@@ -226,6 +243,7 @@
         });
       };
 
+      state.heroChip = (content.querySelector('#heroChipInput')?.value || '').trim();
       state.ticker = Array.from(content.querySelectorAll('#tickerList .mini-form'))
         .map(rowEl => (rowEl.querySelector('[data-field="text"]')?.value || '').trim())
         .filter(Boolean);
@@ -280,6 +298,7 @@
         videos: (state.videos || []).filter(item => item.title || item.videoId),
         gallery: (state.gallery || []).filter(item => item.title || item.src),
         ticker: (state.ticker || []).filter(item => String(item || '').trim()),
+        heroChip: state.heroChip || '',
       };
       const res = await API.put('/api/site-content', data);
       localStorage.setItem('sv_site_content_v1', JSON.stringify(res.data || data));
@@ -312,6 +331,7 @@
         ['stats', 'reviews', 'videos', 'gallery', 'ticker'].forEach((k) => {
           if (!Array.isArray(state[k])) state[k] = [];
         });
+        if (typeof state.heroChip !== 'string') state.heroChip = '';
         localStorage.setItem('sv_site_content_v1', JSON.stringify(state));
         renderPage();
       } catch (err) {

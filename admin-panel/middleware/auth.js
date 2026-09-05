@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const Admin = require('../models/Admin');
+const JWT_SECRET = require('../config/secret');
 
 async function protect(req, res, next) {
   try {
@@ -8,7 +9,7 @@ async function protect(req, res, next) {
     if (!token) {
       return res.status(401).json({ success: false, message: 'Not authorized, token missing' });
     }
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
     const admin = await Admin.findById(decoded.id);
     if (!admin) {
       return res.status(401).json({ success: false, message: 'Admin no longer exists' });

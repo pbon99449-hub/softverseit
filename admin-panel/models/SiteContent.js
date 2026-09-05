@@ -10,6 +10,7 @@ const SiteContent = defineModel({
     videos: [],
     gallery: [],
     ticker: [],
+    heroChip: '',
     popup: {},
   },
 });

@@ -1,10 +1,47 @@
 const jwt = require('jsonwebtoken');
 const Admin = require('../models/Admin');
+const JWT_SECRET = require('../config/secret');
 
 function signToken(admin) {
-  return jwt.sign({ id: admin._id, role: admin.role }, process.env.JWT_SECRET, {
+  return jwt.sign({ id: admin._id, role: admin.role }, JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || '1d',
   });
+}
+
+/* ── লগইন brute-force guard (in-memory, কোনো extra dependency লাগে না) ──
+   একই IP থেকে ১৫ মিনিটে ৮ বারের বেশি ভুল পাসওয়ার্ড দিলে সাময়িক ব্লক।
+   ফলে পাসওয়ার্ড গেস করে (brute-force) ঢোকার চেষ্টা বন্ধ হয়। */
+const loginAttempts = new Map();   // ip -> { count, firstAt }
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;   // ১৫ মিনিট
+const LOGIN_MAX_FAILS = 8;
+
+function loginKey(req) {
+  const fwd = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  return fwd || String((req.socket && req.socket.remoteAddress) || 'unknown');
+}
+
+function tooManyLoginFails(req) {
+  const rec = loginAttempts.get(loginKey(req));
+  if (!rec) return false;
+  if (Date.now() - rec.firstAt > LOGIN_WINDOW_MS) {
+    loginAttempts.delete(loginKey(req));
+    return false;
+  }
+  return rec.count >= LOGIN_MAX_FAILS;
+}
+
+function recordLoginFailure(req) {
+  const key = loginKey(req);
+  const rec = loginAttempts.get(key);
+  if (!rec || Date.now() - rec.firstAt > LOGIN_WINDOW_MS) {
+    loginAttempts.set(key, { count: 1, firstAt: Date.now() });
+  } else {
+    rec.count += 1;
+  }
+}
+
+function clearLoginFailures(req) {
+  loginAttempts.delete(loginKey(req));
 }
 
 /* ── Session cookie (httpOnly) ──
@@ -91,15 +128,24 @@ async function resolveAdmin(email, password) {
   return Admin.findOne({ email: normalizedEmail });
 }
 
-function matchesConfiguredDefaultAdmin(admin, candidatePassword) {
-  if (!admin) return false;
-  const fallback = fallbackAdminObject();
-  return String(admin.email || '').toLowerCase().trim() === fallback.email && String(candidatePassword || '').trim() === fallback.password;
+function matchesConfiguredDefaultAdmin() {
+  // ব্যাকডোর বন্ধ — ডিফল্ট পাসওয়ার্ড দিয়ে আর কখনো সরাসরি লগইন হবে না।
+  // (প্রথমবার লগইনের সময় ensureDefaultAdminRecord() ডিফল্ট পাসওয়ার্ডসহ
+  // অ্যাকাউন্ট তৈরি করে, তখন comparePassword দিয়েই যাচাই হয়।)
+  return false;
 }
 
 // POST /api/auth/login
 async function login(req, res) {
   try {
+    // brute-force ব্লক — অনেকবার ভুল চেষ্টা করলে সাময়িকভাবে লগইন বন্ধ
+    if (tooManyLoginFails(req)) {
+      return res.status(429).json({
+        success: false,
+        message: 'অনেকবার ভুল চেষ্টা হয়েছে — নিরাপত্তার জন্য ১৫ মিনিট পর আবার চেষ্টা করুন',
+      });
+    }
+
     const { email, password } = req.body;
     if (!email || !password) {
       return res.status(400).json({ success: false, message: 'Email and password are required' });
@@ -107,6 +153,7 @@ async function login(req, res) {
 
     const admin = await resolveAdmin(email, password);
     if (!admin) {
+      recordLoginFailure(req);
       return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
 
@@ -121,17 +168,17 @@ async function login(req, res) {
       }
     }
 
-    if (!match) {
-      match = matchesConfiguredDefaultAdmin(admin, candidatePassword);
-    }
+    // ⚠️ নিরাপত্তা: এখানে আর কোনো "ডিফল্ট পাসওয়ার্ড" বা plaintext ফলব্যাক
+    // মেলানো হয় না। আগে ডিফল্ট 'ChangeMe123!' পাসওয়ার্ড পাসওয়ার্ড বদলানোর
+    // পরেও কাজ করত (ব্যাকডোর) — সেটি বন্ধ করা হয়েছে। comparePassword নিজেই
+    // bcrypt hash এবং legacy plaintext — দুটোই ঠিকমতো যাচাই করে।
 
     if (!match) {
-      match = String(admin.password || '') === candidatePassword;
-    }
-
-    if (!match) {
+      recordLoginFailure(req);
       return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
+
+    clearLoginFailures(req);
 
     const token = signToken(admin);
     // লগইন সফল → httpOnly session cookie সেট হয়, যা দিয়ে সার্ভার

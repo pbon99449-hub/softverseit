@@ -44,6 +44,16 @@ app.use((req, res, next) => {
   next();
 });
 
+// ── Security headers ──
+// ব্রাউজার-সাইড সাধারণ আক্রমণ (MIME sniffing, clickjacking) ঠেকাতে।
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('X-DNS-Prefetch-Control', 'off');
+  next();
+});
+
 // ── API Routes ──
 app.use('/api/auth', authRoutes);
 app.use('/api/enrollments', enrollmentRoutes);
@@ -92,6 +102,7 @@ app.get('/admin/', (req, res) => { res.setHeader('Set-Cookie', CLEAR_SESSION_COO
 // redirect করে দেবে। এটি static middleware-এর আগে বসানো হয়েছে যাতে
 // express.static দিয়ে এই পেজগুলো কোনোভাবেই সরাসরি ফাঁকি দেওয়া না যায়।
 const jwt = require('jsonwebtoken');
+const JWT_SECRET = require('./config/secret');
 const PROTECTED_ADMIN_PAGES = new Set([
   'index.html', 'dashboard.html', 'courses.html', 'enrollments.html',
   'results.html', 'site-content.html', 'popup-sms.html', 'register.html',
@@ -106,7 +117,7 @@ function adminSessionToken(req) {
 function adminSessionValid(req) {
   const token = adminSessionToken(req);
   if (!token) return false;
-  try { jwt.verify(token, process.env.JWT_SECRET); return true; }
+  try { jwt.verify(token, JWT_SECRET); return true; }
   catch (_) { return false; }
 }
 
