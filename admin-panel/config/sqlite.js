@@ -1,4 +1,4 @@
-// SQLite-backed mini ORM that mimics the small subset of the Mongoose API
+// SQLite-backed mini ORM
 // used by this project, so the controllers/frontend don't need to change.
 // Storage: a single JSON "data" column per row + createdAt/updatedAt columns.
 const fs = require('fs');
@@ -49,7 +49,7 @@ function matchDoc(doc, filter) {
   return true;
 }
 
-// ── Duplicate-key error, mimicking Mongo's code 11000 ──
+// ── Duplicate-key error ──
 function dupError(msg) {
   const err = new Error(msg || 'Duplicate key');
   err.code = 11000;
@@ -130,7 +130,7 @@ function sortDocs(docs, spec) {
   });
 }
 
-// Chainable, awaitable query — mimics the Mongoose Query API used here:
+// Chainable, awaitable query — supports chained find/sort/skip/limit:
 //   Model.find(filter).sort({...}).skip(n).limit(n)  /  Model.findOne().lean()
 class Query {
   constructor(table, wrapFn, filter, single) {
@@ -184,7 +184,7 @@ class SingleQuery {
 }
 
 
-// ── defineModel — the mini-ORM entry point (Mongoose-like API) ───────
+// ── defineModel — the mini-ORM entry point (SQLite-backed) ───────
 function defineModel({ name, tableName, defaults = {}, uniqueChecks = [], hooks = {} }) {
   ensureTable(tableName);
 

@@ -73,8 +73,9 @@ function maxAgeFromToken(token) {
 }
 
 function fallbackAdminObject() {
-  const email = (process.env.ADMIN_EMAIL || 'admin@softverseit.com').toLowerCase().trim();
-  const password = process.env.ADMIN_PASSWORD || 'ChangeMe123!';
+  // নিরাপত্তা: কোনো হার্ডকোডেড ডিফল্ট ক্রেডেনশিয়াল নেই — সব .env থেকে আসে।
+  const email = String(process.env.ADMIN_EMAIL || '').toLowerCase().trim();
+  const password = String(process.env.ADMIN_PASSWORD || '');
   const name = process.env.ADMIN_NAME || 'Super Admin';
   return {
     _id: 'fallback-admin',
@@ -87,15 +88,18 @@ function fallbackAdminObject() {
 }
 
 function isFallbackLoginRequired() {
-  // Legacy MongoDB check removed — the panel now runs on the built-in SQLite
-  // store, which is always available, so the fallback login path is never used.
+  // The panel runs on the built-in SQLite store, which is always
+  // available, so the fallback login path is never used.
   return false;
 }
 
 async function ensureDefaultAdminRecord() {
-  const email = (process.env.ADMIN_EMAIL || 'admin@softverseit.com').toLowerCase().trim();
-  const password = process.env.ADMIN_PASSWORD || 'ChangeMe123!';
+  const email = String(process.env.ADMIN_EMAIL || '').toLowerCase().trim();
+  const password = String(process.env.ADMIN_PASSWORD || '');
   const name = process.env.ADMIN_NAME || 'Super Admin';
+
+  // .env কনফিগার না থাকলে কোনো অ্যাকাউন্ট তৈরি/ব্যবহার করা যাবে না
+  if (!email || !password) return null;
 
   if (isFallbackLoginRequired()) return null;
 
@@ -110,22 +114,29 @@ async function resolveAdmin(email, password) {
   const normalizedPassword = String(password || '').trim();
   const fallback = fallbackAdminObject();
 
-  if (normalizedEmail === fallback.email && normalizedPassword === fallback.password) {
-    if (isFallbackLoginRequired()) {
-      return fallback;
-    }
+  // নিরাপত্তা: .env-এ ADMIN_EMAIL/ADMIN_PASSWORD কনফিগার না থাকলে কেউই লগইন
+  // করতে পারবে না — কোনো ডিফল্ট/ব্যাকডোর অ্যাকাউন্ট কাজ করবে না।
+  if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) return null;
 
-    const existing = await Admin.findOne({ email: normalizedEmail });
-    if (existing) return existing;
-
-    return ensureDefaultAdminRecord();
-  }
-
-  if (isFallbackLoginRequired()) {
+  // শুধুমাত্র .env-এ কনফিগার করা অ্যাকাউন্টেই (ADMIN_EMAIL + ADMIN_PASSWORD)
+  // লগইন করা যাবে — ইমেইল ও পাসওয়ার্ড দুটোই হুবহু মিলতে হবে।
+  // অন্য যেকোনো ইমেইল/পাসওয়ার্ড দিলে লগইন হবে না (401 Invalid)।
+  if (normalizedEmail !== fallback.email || normalizedPassword !== fallback.password) {
     return null;
   }
 
-  return Admin.findOne({ email: normalizedEmail });
+  const existing = await Admin.findOne({ email: normalizedEmail });
+  const admin = existing || (await ensureDefaultAdminRecord());
+  if (!admin) return null;
+
+  // DB-র পাসওয়ার্ড .env-এর সাথে সিঙ্কে রাখা হয় — যাতে কনফিগার করা
+  // জোড়া দিয়ে সবসময় লগইন করা যায় (প্যানেল থেকে বদলালেও আবার ফিরে আসে)।
+  const okPw = await admin.comparePassword(normalizedPassword).catch(() => false);
+  if (!okPw) {
+    admin.password = normalizedPassword;
+    await admin.save();
+  }
+  return admin;
 }
 
 function matchesConfiguredDefaultAdmin() {
@@ -169,8 +180,7 @@ async function login(req, res) {
     }
 
     // ⚠️ নিরাপত্তা: এখানে আর কোনো "ডিফল্ট পাসওয়ার্ড" বা plaintext ফলব্যাক
-    // মেলানো হয় না। আগে ডিফল্ট 'ChangeMe123!' পাসওয়ার্ড পাসওয়ার্ড বদলানোর
-    // পরেও কাজ করত (ব্যাকডোর) — সেটি বন্ধ করা হয়েছে। comparePassword নিজেই
+    // মেলানো হয় না (আগের ব্যাকডোর বন্ধ করা হয়েছে)। comparePassword নিজেই
     // bcrypt hash এবং legacy plaintext — দুটোই ঠিকমতো যাচাই করে।
 
     if (!match) {
@@ -218,7 +228,7 @@ async function changePassword(req, res) {
   }
 }
 
-// POST /api/auth/register — create a new admin account (real, stored in MongoDB)
+// POST /api/auth/register — create a new admin account (stored in SQLite)
 async function register(req, res) {
   try {
     const { name, email, password } = req.body;

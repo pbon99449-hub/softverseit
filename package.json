@@ -7,5 +7,8 @@
     "start": "node admin-panel/server.js",
     "seed": "node admin-panel/seed.js",
     "test": "node tests/admin-live-sync.test.js && node JS/_test_guard.js && node admin-panel/public/js/_test_offline.js"
+  },
+  "dependencies": {
+    "three": "^0.185.1"
   }
 }

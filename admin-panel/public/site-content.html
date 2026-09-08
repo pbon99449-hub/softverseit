@@ -301,7 +301,10 @@
         heroChip: state.heroChip || '',
       };
       const res = await API.put('/api/site-content', data);
-      localStorage.setItem('sv_site_content_v1', JSON.stringify(res.data || data));
+      // গ্যালারির base64 ছবি অনেক হয়ে গেলে localStorage-এর quota (≈৫MB) শেষ হয়ে
+      // যেতে পারে — তখন এখানে থ্রো করলে সার্ভারে সফলভাবে সেভ হওয়ার পরেও ভুল করে
+      // "সংরক্ষণ ব্যর্থ" টোস্ট দেখাত। সার্ভার সেভই আসল সেভ, ক্যাশ ব্যর্থ হলে চুপচাপ এগোই।
+      try { localStorage.setItem('sv_site_content_v1', JSON.stringify(res.data || data)); } catch (_) {}
       window.dispatchEvent(new CustomEvent('sv-content-updated', { detail: 'sv_site_content_v1' }));
       return res;
     }
@@ -332,7 +335,9 @@
           if (!Array.isArray(state[k])) state[k] = [];
         });
         if (typeof state.heroChip !== 'string') state.heroChip = '';
-        localStorage.setItem('sv_site_content_v1', JSON.stringify(state));
+        // localStorage quota শেষ হলে পুরো অ্যাডমিন পেজ ভুল করে error দেখাত —
+        // ডাটা তো সার্ভার থেকেই এসেছে, ক্যাশ সেভ ব্যর্থ হলে সমস্যা নেই।
+        try { localStorage.setItem('sv_site_content_v1', JSON.stringify(state)); } catch (_) {}
         renderPage();
       } catch (err) {
         content.innerHTML = '<div class="page-loader">' + esc(err.message) + '</div>';

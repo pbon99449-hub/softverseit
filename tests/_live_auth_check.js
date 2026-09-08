@@ -1,4 +1,11 @@
 // লগইন → cookie → protected page ফ্লো লাইভ টেস্ট (Node 22 fetch দিয়ে)
+// নিরাপত্তা: ক্রেডেনশিয়াল কোডে হার্ডকোড করা হয় না — admin-panel/.env থেকে পড়া হয়।
+const fs = require('fs');
+const path = require('path');
+const envFile = fs.readFileSync(path.join(__dirname, '..', 'admin-panel', '.env'), 'utf8');
+const gv = (k) => { const m = envFile.match(new RegExp('^' + k + '=(.*)$', 'm')); return m ? m[1].trim() : ''; };
+const ADMIN_EMAIL = gv('ADMIN_EMAIL');
+const ADMIN_PASSWORD = gv('ADMIN_PASSWORD');
 const BASE = 'http://localhost:5000';
 
 (async () => {
@@ -11,7 +18,7 @@ const BASE = 'http://localhost:5000';
   const loginRes = await fetch(BASE + '/api/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: 'admin@softverseit.com', password: 'ChangeMe123!' }),
+    body: JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD }),
   });
   const setCookie = loginRes.headers.get('set-cookie') || '';
   const cookie = setCookie.split(';')[0];
@@ -28,7 +35,7 @@ const BASE = 'http://localhost:5000';
   const wrong = await fetch(BASE + '/api/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: 'admin@softverseit.com', password: 'WRONG-PASS' }),
+    body: JSON.stringify({ email: ADMIN_EMAIL, password: 'WRONG-PASS' }),
   });
   console.log('login WRONG password ->', wrong.status, wrong.status === 401 ? 'REJECTED ✅' : '❌');
 

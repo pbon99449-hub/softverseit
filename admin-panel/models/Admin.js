@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs');
 const { defineModel } = require('../config/sqlite');
 
-// Password hashing (was a Mongoose pre-save hook)
+// Password hashing (runs before every save)
 async function hashPassword(data) {
   if (typeof data.password === 'string' && data.password.length >= 6 && !data.password.startsWith('$2')) {
     data.password = await bcrypt.hash(data.password, 10);

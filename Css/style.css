@@ -935,7 +935,7 @@ footer { position: relative; z-index: 1; background: var(--navy); border-top: 3p
 }
 
 /* ============================================================
-   ANIMATED COURSE BANNER (stick-figure hero)
+   ANIMATED COURSE BANNER (cartoon rope-pull hero)
    ============================================================ */
 .sv-hero-banner{
   position: relative; z-index: 1;
@@ -967,73 +967,103 @@ footer { position: relative; z-index: 1; background: var(--navy); border-top: 3p
 .sv-slide:nth-child(3n){ background-image: linear-gradient(135deg,#f4b942,#b4650c); }
 
 .sv-hook{
-  position:absolute; right:16%; top:36%; width:10px; height:10px;
-  border-radius:50%; background:#f4b942; box-shadow:0 0 8px rgba(244,185,66,.75);
+  position:absolute; right:16%; top:36%; width:14px; height:14px;
+  border-radius:50%; border:3px solid #e8edf2; background:rgba(0,0,0,.25);
+  box-shadow:0 0 10px rgba(244,185,66,.6), inset 0 0 4px rgba(0,0,0,.7);
   opacity:0; transform:scale(.3); transition:opacity .2s, transform .3s; z-index:5;
 }
 .sv-hook.sv-show{ opacity:1; transform:scale(1); }
 
-.sv-rope-line{
-  position:absolute; right:19%; bottom:74px; width:2px; height:76px;
-  background:repeating-linear-gradient(#f4b942 0 6px, transparent 6px 10px);
-  transform-origin:bottom center; transform:rotate(30deg);
-  opacity:0; transition:opacity .2s; z-index:5;
-}
-.sv-rope-line.sv-show{ opacity:.85; }
+/* রিয়েলিস্টিক দড়ি — JS প্রতি ফ্রেমে hook → হাত পর্যন্ত path এঁকে দেয় */
+.sv-rope-path, .sv-rope-tex{ opacity:0; transition:opacity .25s; }
+.sv-throw-svg.sv-rope-on .sv-rope-path{ opacity:.95; }
+.sv-throw-svg.sv-rope-on .sv-rope-tex{ opacity:.85; }
 
 .sv-throw-svg{ position:absolute; inset:0; width:100%; height:100%; z-index:5; pointer-events:none; }
 .sv-throw-svg path{ opacity:0; }
 .sv-throw-svg circle{ opacity:0; filter:drop-shadow(0 0 3px rgba(244,185,66,.8)); }
 
-.sv-figure{ position:absolute; bottom:22px; left:78%; width:34px; height:52px; z-index:6; }
+.sv-figure{ position:absolute; bottom:14px; left:78%; width:42px; height:70px; z-index:6; }
 .sv-figure.sv-flip{ transform:scaleX(-1); }
 .sv-figure svg{ width:100%; height:100%; overflow:visible; }
 
-.sv-body-group{ transition:transform .3s; }
-.sv-figure.sv-shoulder .sv-body-group{ transform:rotate(-20deg); }
-.sv-figure.sv-shoulder.sv-tugging .sv-body-group{ animation:sv-tugRecoil .4s ease-in-out 2; }
-@keyframes sv-tugRecoil{
-  0%,100%{ transform:rotate(-20deg) translateX(0); }
-  50%{ transform:rotate(-20deg) translateX(7px); }
+/* ── কার্টুন ক্যারেক্টারের রং ── */
+.sv-skin{ fill:#ffd9b3; }
+.sv-skin-dark{ fill:#e8b98a; }
+.sv-limb{ stroke:#ffd9b3; stroke-width:6.5; stroke-linecap:round; fill:none; }
+.sv-limb-dark{ stroke:#e8b98a; }
+.sv-shirt{ fill:#00b894; stroke:#0a8f74; stroke-width:1.6; }
+.sv-cap{ fill:#f4b942; }
+.sv-pant{ stroke:#2a4a78; stroke-width:9.5; stroke-linecap:round; fill:none; }
+.sv-pant-dark{ stroke:#203a61; }
+.sv-shoe{ fill:#243244; }
+.sv-shoe-dark{ fill:#1a2634; }
+.sv-eye{ fill:#26323c; }
+.sv-mouth{ fill:none; stroke:#a34d36; stroke-width:1.5; stroke-linecap:round; }
+
+/* জয়েন্টগুলো viewBox কোঅর্ডিনেটে ঘোরে */
+.sv-body-group, .sv-thigh, .sv-shin, .sv-arm{ transform-box:view-box; }
+.sv-body-group{ transform-origin:30px 58px; transition:transform .3s; }
+.sv-thigh{ transform-origin:30px 56px; transition:transform .25s ease-out; }
+.sv-shin1{ transform-origin:33px 76px; transition:transform .25s ease-out; }
+.sv-shin2{ transform-origin:27px 76px; transition:transform .25s ease-out; }
+.sv-arm{ transform-origin:32px 31px; transition:transform .3s; }
+
+/* দড়ি কাঁধে — শরীর পেছনে হেলান */
+.sv-figure.sv-shoulder .sv-body-group{ transform:rotate(-18deg); }
+.sv-figure.sv-shoulder .sv-arm1{ animation:none; transform:rotate(38deg); }
+.sv-figure.sv-shoulder .sv-arm2{ animation:none; transform:rotate(150deg); }
+
+/* টানার সময় — পুরো শরীর টানের তালে ওঠানামা করে, কাঁপুনি, ভারী পা ফেলা */
+.sv-figure.sv-straining .sv-body-group{ animation:sv-strainLean 1.26s ease-in-out infinite; }
+@keyframes sv-strainLean{
+  0%{ transform:rotate(-30deg) translateY(0); }
+  35%{ transform:rotate(-34deg) translateY(1.5px); }
+  55%{ transform:rotate(-15deg) translateY(-1px); }
+  100%{ transform:rotate(-30deg) translateY(0); }
 }
-.sv-figure.sv-pushing .sv-body-group{ transform:rotate(-14deg); }
-.sv-figure.sv-resting .sv-body-group{ transform:translateY(7px) rotate(2deg); }
+.sv-figure.sv-straining svg{ animation:sv-strainShiver .14s linear infinite; }
+@keyframes sv-strainShiver{ 0%,100%{ transform:translate(.4px,-.3px); } 50%{ transform:translate(-.4px,.3px); } }
+.sv-figure.sv-straining .sv-thigh1{ animation:sv-pullThigh .63s infinite; }
+.sv-figure.sv-straining .sv-thigh2{ animation:sv-pullThigh .63s infinite; animation-delay:-.315s; }
+.sv-figure.sv-straining .sv-shin1{ animation:sv-pullShin .63s infinite; }
+.sv-figure.sv-straining .sv-shin2{ animation:sv-pullShin .63s infinite; animation-delay:-.315s; }
+@keyframes sv-pullThigh{ 0%{transform:rotate(32deg);} 45%{transform:rotate(-28deg);} 100%{transform:rotate(32deg);} }
+@keyframes sv-pullShin{ 0%{transform:rotate(-10deg);} 45%{transform:rotate(38deg);} 100%{transform:rotate(-10deg);} }
+.sv-figure.sv-straining .sv-arm1{ animation:sv-pullArm 1.26s ease-in-out infinite; }
+.sv-figure.sv-straining .sv-arm2{ animation:sv-pullArm 1.26s ease-in-out infinite; animation-delay:-.1s; }
+@keyframes sv-pullArm{ 0%{transform:rotate(-34deg);} 35%{transform:rotate(-54deg);} 60%{transform:rotate(-26deg);} 100%{transform:rotate(-34deg);} }
+
+/* বিশ্রাম — হাঁটু গেড়ে বসে হাঁপাচ্ছে (বুক দুলুনি); পা পেছনে ভাঁজ হয়, ভুল পাশে নামে না */
+.sv-figure.sv-resting .sv-body-group{ animation:sv-breathe 1.3s ease-in-out infinite; }
+@keyframes sv-breathe{
+  0%,100%{ transform:translateY(18px) rotate(6deg); }
+  50%{ transform:translateY(20px) rotate(8deg); }
+}
+.sv-figure.sv-resting .sv-thigh1,.sv-figure.sv-resting .sv-thigh2{ transform:rotate(-6deg); transition:transform .5s; animation:none; }
+.sv-figure.sv-resting .sv-shin1,.sv-figure.sv-resting .sv-shin2{ transform:rotate(96deg); transition:transform .5s; animation:none; }
+.sv-figure.sv-resting .sv-arm1{ transform:rotate(10deg); }
+.sv-figure.sv-resting .sv-arm2{ transform:rotate(-30deg); }
+
+/* দৌড় */
 .sv-figure.sv-running .sv-body-group{ transform:rotate(-16deg); }
-
-.sv-thigh{ transform-origin:18px 33px; transition:transform .25s ease-out; }
-.sv-shin{ transform-origin:18px 41px; transition:transform .25s ease-out; }
-.sv-figure.sv-pushing .sv-thigh1{ animation:sv-pushThigh .5s infinite; }
-.sv-figure.sv-pushing .sv-thigh2{ animation:sv-pushThigh .5s infinite; animation-delay:-.25s; }
-.sv-figure.sv-pushing .sv-shin1{ animation:sv-pushShin .5s infinite; }
-.sv-figure.sv-pushing .sv-shin2{ animation:sv-pushShin .5s infinite; animation-delay:-.25s; }
-@keyframes sv-pushThigh{ 0%{transform:rotate(16deg);} 50%{transform:rotate(-18deg);} 100%{transform:rotate(16deg);} }
-@keyframes sv-pushShin{ 0%{transform:rotate(4deg);} 50%{transform:rotate(24deg);} 100%{transform:rotate(4deg);} }
-
 .sv-figure.sv-running .sv-thigh1{ animation:sv-runThigh .34s infinite; }
 .sv-figure.sv-running .sv-thigh2{ animation:sv-runThigh .34s infinite; animation-delay:-.17s; }
 .sv-figure.sv-running .sv-shin1{ animation:sv-runShin .34s infinite; }
 .sv-figure.sv-running .sv-shin2{ animation:sv-runShin .34s infinite; animation-delay:-.17s; }
 @keyframes sv-runThigh{ 0%{transform:rotate(38deg);} 50%{transform:rotate(-38deg);} 100%{transform:rotate(38deg);} }
 @keyframes sv-runShin{ 0%{transform:rotate(2deg);} 50%{transform:rotate(48deg);} 100%{transform:rotate(2deg);} }
-
-.sv-figure.sv-resting .sv-thigh1,.sv-figure.sv-resting .sv-thigh2{ transform:rotate(78deg); transition:transform .5s; animation:none; }
-.sv-figure.sv-resting .sv-shin1,.sv-figure.sv-resting .sv-shin2{ transform:rotate(-92deg); transition:transform .5s; animation:none; }
-
-.sv-arm1,.sv-arm2{ transform-origin:18px 16px; transition:transform .3s; }
 .sv-figure.sv-running .sv-arm1{ animation:sv-runArm .34s infinite; }
 .sv-figure.sv-running .sv-arm2{ animation:sv-runArm .34s infinite; animation-delay:-.17s; }
 @keyframes sv-runArm{ 0%{transform:rotate(-48deg);} 50%{transform:rotate(48deg);} 100%{transform:rotate(-48deg);} }
 
-.sv-figure.sv-pushing .sv-arm1{ animation:sv-pushArm .5s infinite; }
-.sv-figure.sv-pushing .sv-arm2{ animation:sv-pushArm .5s infinite; }
-@keyframes sv-pushArm{ 0%,100%{transform:rotate(-68deg);} 50%{transform:rotate(-58deg);} }
-
+/* দড়ি ছোড়ার আগে — একটু নেচে পেছনে হাত তোলা (anticipation) */
+.sv-figure.sv-winding .sv-body-group{ transform:rotate(10deg) translateY(2px); }
 .sv-figure.sv-winding .sv-arm2{ transform:rotate(150deg); transition:transform .32s ease-in; }
-.sv-figure.sv-winding .sv-thigh1{ animation:sv-pushThigh .4s ease-in-out 2; }
-.sv-figure.sv-winding .sv-thigh2{ animation:sv-pushThigh .4s ease-in-out 2; animation-delay:-.2s; }
-.sv-figure.sv-winding .sv-shin1{ animation:sv-pushShin .4s ease-in-out 2; }
-.sv-figure.sv-winding .sv-shin2{ animation:sv-pushShin .4s ease-in-out 2; animation-delay:-.2s; }
-
+.sv-figure.sv-winding .sv-thigh1{ animation:sv-pullThigh .4s ease-in-out 2; }
+.sv-figure.sv-winding .sv-thigh2{ animation:sv-pullThigh .4s ease-in-out 2; animation-delay:-.2s; }
+.sv-figure.sv-winding .sv-shin1{ animation:sv-pullShin .4s ease-in-out 2; }
+.sv-figure.sv-winding .sv-shin2{ animation:sv-pullShin .4s ease-in-out 2; animation-delay:-.2s; }
 .sv-figure.sv-throwing .sv-arm2{ animation:sv-throwSwing .38s cubic-bezier(.34,1.2,.64,1) forwards; }
 @keyframes sv-throwSwing{
   0%{ transform:rotate(150deg); }
@@ -1043,15 +1073,35 @@ footer { position: relative; z-index: 1; background: var(--navy); border-top: 3p
 .sv-figure.sv-throwing .sv-thigh1{ transform:rotate(6deg); transition:transform .3s ease-out; animation:none; }
 .sv-figure.sv-throwing .sv-thigh2{ transform:rotate(-6deg); transition:transform .3s ease-out; animation:none; }
 
-.sv-figure.sv-shoulder .sv-arm1{ animation:none; transform:rotate(38deg); }
-.sv-figure.sv-shoulder .sv-arm2{ animation:none; transform:rotate(150deg); }
-
-.sv-figure.sv-resting .sv-arm1{ transform:rotate(60deg); }
-.sv-figure.sv-resting .sv-arm2{ transform:rotate(-150deg); }
-
+/* ঘাম — টানতে গিয়ে আর বিশ্রামের সময় */
 .sv-sweat{ opacity:0; }
-.sv-figure.sv-resting .sv-sweat{ animation:sv-sweatDrop 1s ease-in infinite; }
+.sv-figure.sv-resting .sv-sweat, .sv-figure.sv-straining .sv-sweat{ animation:sv-sweatDrop 1s ease-in infinite; }
 @keyframes sv-sweatDrop{ 0%{ transform:translateY(0); opacity:1; } 100%{ transform:translateY(7px); opacity:0; } }
+
+/* দাঁড়িয়ে-থাকা অবস্থায় হালকা শ্বাস-প্রশ্বাস */
+.sv-figure.sv-idle .sv-body-group{ animation:sv-idleBob 2.4s ease-in-out infinite; }
+@keyframes sv-idleBob{ 0%,100%{ transform:translateY(0) rotate(0deg); } 50%{ transform:translateY(1.6px) rotate(2deg); } }
+
+/* কষ্ট/হাঁপানির সময় মুখ খোলা (দাঁত চেপে টানা) */
+.sv-mouth-strain{ fill:#8a3226; opacity:0; }
+.sv-figure.sv-straining .sv-mouth-strain{ opacity:1; }
+.sv-figure.sv-straining .sv-mouth{ opacity:0; }
+.sv-figure.sv-resting .sv-mouth-strain{ opacity:1; }
+.sv-figure.sv-resting .sv-mouth{ opacity:0; }
+
+/* পায়ের নিচে ছায়া — ক্যারেক্টারটা মাটিতে দাঁড়িয়ে আছে মনে হয় */
+.sv-shadow{ position:absolute; bottom:8px; width:52px; height:10px; border-radius:50%;
+  background:radial-gradient(ellipse at center, rgba(0,0,0,.45), rgba(0,0,0,0) 70%); z-index:4; }
+
+/* ধুলা — পা গড়ালে আর hook-এ দড়ি আটকালে */
+.sv-dust{ position:absolute; width:7px; height:7px; border-radius:50%;
+  background:rgba(215,205,185,.55); z-index:7; pointer-events:none;
+  animation:sv-dustFly .7s ease-out forwards; }
+@keyframes sv-dustFly{ to{ transform:translate(var(--dx), var(--dy)) scale(2.4); opacity:0; } }
+
+/* টানার ধাক্কায় পুরো ফ্রেম সামান্য কাঁপে */
+.sv-frame.sv-shake{ animation:sv-frameShake .18s linear; }
+@keyframes sv-frameShake{ 0%,100%{transform:translate(0,0);} 25%{transform:translate(1px,-1px);} 50%{transform:translate(-1px,1px);} 75%{transform:translate(1px,1px);} }
 
 .sv-dots{ display:flex; justify-content:center; gap:8px; margin-top:16px; }
 .sv-dot{ width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.25); transition:background .3s; }
@@ -1067,9 +1117,8 @@ footer { position: relative; z-index: 1; background: var(--navy); border-top: 3p
   .sv-frame{ bottom:44px; }
   .sv-slide{ padding:12px; }
   .sv-slide h3{ font-size:16px; }
-  .sv-figure{ width:26px; height:40px; bottom:16px; }
-  .sv-hook{ width:8px; height:8px; }
-  .sv-rope-line{ bottom:56px; height:56px; }
+  .sv-figure{ width:32px; height:53px; bottom:16px; }
+  .sv-hook{ width:11px; height:11px; }
   .sv-dots{ margin-top:12px; }
 }
 
@@ -1115,8 +1164,7 @@ footer { position: relative; z-index: 1; background: var(--navy); border-top: 3p
   .wm-body { padding:  1.2rem 1.1rem 1.4rem; }
   .sv-stage { height:  240px; }
   .sv-frame { bottom:  42px; }
-  .sv-figure { width:  22px; height:  34px; bottom:  14px; }
-  .sv-rope-line { height:  50px; bottom:  54px; right:  15%; }
+  .sv-figure { width:  27px; height:  45px; bottom:  14px; }
   .sv-hook { right:  15%; }
   .sv-dots { margin-top:  10px; }
 }

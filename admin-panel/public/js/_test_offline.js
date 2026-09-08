@@ -35,30 +35,19 @@ function ok(name, cond, extra) {
 }
 
 const admins0 = JSON.parse(store['sv_admins_v1'] || '[]');
-ok('default admin seeded', admins0.length === 1 && admins0[0].email === 'admin@softverseit.com');
+ok('no admin credentials stored client-side', admins0.length === 0);
 ok('empty enrollments store', JSON.parse(store['sv_enrollments_v1']).length === 0);
 ok('empty results store', JSON.parse(store['sv_results_v1']).length === 0);
 
-let r = ctx.localReply('/api/auth/login', 'POST', { email: 'admin@softverseit.com', password: 'wrong' }, true);
-ok('login bad password -> 401 json', r.success === false && r.message === 'Invalid email or password');
+let r = ctx.localReply('/api/auth/login', 'POST', { email: 'x@y.com', password: 'z' }, true);
+ok('offline login disabled -> 503', r.success === false && String(r.message).includes('START-SERVER'));
 
-r = ctx.localReply('/api/auth/login', 'POST', { email: 'admin@softverseit.com', password: 'ChangeMe123!' }, true);
-ok('login good -> success', r.success === true && !!r.token && r.admin.email === 'admin@softverseit.com');
+r = ctx.localReply('/api/auth/register', 'POST', { name: 'x', email: 'a@b.com', password: 'secret123' }, false);
+ok('offline register disabled -> 503', r.success === false && String(r.message).includes('START-SERVER'));
 
-r = ctx.localReply('/api/auth/register', 'POST', { name: 'Test Admin', email: 'test@softverseit.com', password: 'secret123' }, false);
-ok('register -> 201', r.success === true && r.admin.name === 'Test Admin');
-
-r = ctx.localReply('/api/auth/register', 'POST', { name: 'x', email: 'test@softverseit.com', password: 'secret123' }, false);
-ok('register duplicate -> 409', r.success === false && r.message === 'An account with this email already exists');
-
-r = ctx.localReply('/api/auth/register', 'POST', { name: 'x', email: 'not-an-email', password: 'secret123' }, false);
-ok('register bad email -> 400', r.success === false && r.message === 'Please enter a valid email address');
-
-r = ctx.localReply('/api/auth/register', 'POST', { name: 'x', email: 'a@b.com', password: '123' }, false);
-ok('register short pw -> 400', r.success === false && r.message === 'Password must be at least 6 characters');
-
-store['sv_admin_token'] = 'local_' + admins0[0]._id;
-store['sv_admin_user'] = JSON.stringify({ id: admins0[0]._id, name: admins0[0].name, email: admins0[0].email, role: admins0[0].role });
+// অফলাইন লগইন বন্ধ থাকায় protected-endpoint টেস্টের জন্য সরাসরি টেস্ট সেশন বসানো হয়
+store['sv_admin_token'] = 'local_test_session';
+store['sv_admin_user'] = JSON.stringify({ id: 'test_admin', name: 'Test Admin', email: 'test@softverseit.com', role: 'superadmin' });
 
 r = ctx.localReply('/api/dashboard/stats', 'GET', undefined, true);
 ok('dashboard stats -> 200', r.success === true && typeof r.data.totalEnrollments === 'number');

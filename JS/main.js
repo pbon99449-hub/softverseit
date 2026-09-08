@@ -350,8 +350,21 @@ function animateStatCount(el) {
   requestAnimationFrame(step);
 }
 
+let lastSiteContentSig = null;
+// গ্যালারিতে ইউজার "আরও ছবি দেখুন" বাটন দিয়ে কতগুলো ছবি দেখা অবস্থায় আছে —
+// পেজ প্রতি ১০ সেকেন্ডে কনটেন্ট লোড করে, এই কাউন্ট না রাখলে প্রতিবার
+// re-render-এ দেখানো ছবিগুলো আবার লুকিয়ে যেত (ছবি কিছুক্ষণ পর hide হওয়ার বাগ)।
+let galleryRevealedCount = 0;
+
 function renderSiteContent(content) {
   const siteContent = normalizeSiteContent(content || DEFAULT_SITE_CONTENT);
+
+  // একই ডাটা বারবার এলে (প্রতি ১০ সেকেন্ডের পোল) আর কিছু না-করে রিটার্ন করি —
+  // নাহলে প্রতিবার গ্যালারি re-render হয়ে "আরও ছবি দেখুন" দিয়ে দেখানো ছবিগুলো
+  // আবার g-hidden হয়ে যেত এবং স্ট্যাট/ভিডিও এলিমেন্টের অ্যানিমেশনও রিসেট হতো।
+  const contentSig = JSON.stringify(siteContent);
+  if (contentSig === lastSiteContentSig) return;
+  lastSiteContentSig = contentSig;
 
   renderTicker(siteContent.ticker);
 
@@ -442,18 +455,38 @@ function renderSiteContent(content) {
 
   const galleryGrid = document.getElementById('galleryGrid');
   if (galleryGrid) {
+    // আগের রেন্ডারে ইউজার কতগুলো ছবি দেখা অবস্থায় ছিল সেটা মনে রাখি —
+    // নতুন ডাটা এলেও ইতিমধ্যে দেখানো ছবিগুলো লুকিয়ে যাবে না।
+    const prevItems = galleryGrid.querySelectorAll('.g-item');
+    const prevRevealed = prevItems.length - galleryGrid.querySelectorAll('.g-item.g-hidden').length;
+    if (prevItems.length) galleryRevealedCount = prevRevealed;
+
+    // প্রথমে ৫টি ছবি দেখানো হয়, বাকিগুলো "আরও ছবি দেখুন" বাটনে আসে —
+    // তবে ইউজার আগে যতগুলো রিভিল করেছে সেগুলো রেন্ডারের পরেও দৃশ্যমান থাকবে।
+    const initialShow = 5;
+    const visibleCount = Math.min(siteContent.gallery.length, Math.max(initialShow, galleryRevealedCount));
+
     galleryGrid.innerHTML = siteContent.gallery.map((item, index) => `
-      <div class="g-item ${index >= 5 ? 'g-hidden' : ''}" data-cat="${item.category || 'batch'}" data-src="${item.src || ''}" data-label="${item.title || ''}" data-icon="📸">
+      <div class="g-item ${index >= visibleCount ? 'g-hidden' : ''}" data-cat="${escapeHtml(item.category || 'batch')}" data-src="${escapeHtml(item.src || '')}" data-label="${escapeHtml(item.title || '')}" data-icon="📸">
         <div class="g-placeholder">
-          <div class="ph-icon"><img src="${item.src || ''}" alt="${item.title || 'Gallery'}" loading="lazy"></div>
-          <div class="ph-text">${item.title || 'গ্যালারি'}</div>
+          <div class="ph-icon"><img src="${escapeHtml(item.src || '')}" alt="${escapeHtml(item.title || 'Gallery')}" loading="lazy"></div>
+          <div class="ph-text">${escapeHtml(item.title || 'গ্যালারি')}</div>
         </div>
-        <div class="g-overlay"><span class="g-label">${item.title || 'গ্যালারি'}</span></div>
+        <div class="g-overlay"><span class="g-label">${escapeHtml(item.title || 'গ্যালারি')}</span></div>
         <div class="g-zoom-icon">🔍</div>
       </div>
     `).join('');
     if (typeof updateLoadMore === 'function') updateLoadMore();
     if (typeof buildLbList === 'function') buildLbList();
+
+    // ফিল্টার ট্যাব সিলেক্টেড থাকলে নতুন DOM-এ সেটা আবার প্রয়োগ করি
+    const activeTab = document.querySelector('.g-tab.active');
+    if (activeTab && activeTab.dataset.filter && activeTab.dataset.filter !== 'all') {
+      const filter = activeTab.dataset.filter;
+      galleryGrid.querySelectorAll('.g-item').forEach(item => {
+        item.style.display = (item.dataset.cat === filter) ? 'block' : 'none';
+      });
+    }
   }
 }
 
@@ -478,22 +511,48 @@ function siteApiBase() {
   return siteApiBasePromise;
 }
 
-async function loadSiteContent() {
-  const saved = localStorage.getItem('sv_site_content_v1');
-  if (saved) {
-    try { renderSiteContent(JSON.parse(saved)); } catch (_) {}
-  }
+/* সার্ভার থেকে অন্তত একবার সফল ডাটা এসেছে কিনা — এটা ট্র্যাক না করলে প্রতি ১০
+   সেকেন্ডের পোলে পুরনো localStorage ক্যাশ নতুন ডাটার ওপর আবার এঁকে দেয়। ফলে
+   সার্ভার একবারও রেসপন্স না দিলে (restart/offline) অ্যাডমিন থেকে অ্যাড করা
+   গ্যালারির নতুন ছবি "কিছুক্ষণ পর হারিয়ে যাওয়ার" বাগ হতো। */
+let freshServerDataLoaded = false;
 
+// প্রথম পেইন্ট — সার্ভার রেসপন্স আসার আগে শেষ সেভ হওয়া কনটেন্ট ক্যাশ থেকে দেখাই।
+// ক্যাশ শুধু এই একবার ব্যবহার হয়; এর পরে শুধু সার্ভারের ফ্রেশ ডাটাই রেন্ডার হয়।
+(function paintCachedContent() {
+  try {
+    const saved = localStorage.getItem('sv_site_content_v1');
+    if (saved) renderSiteContent(JSON.parse(saved));
+  } catch (_) {}
+})();
+
+async function loadSiteContent() {
   try {
     const base = await siteApiBase();
     const res = await fetch(base + '/api/site-content', { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed to load site content');
     const json = await res.json();
     const data = normalizeSiteContent(json && json.data ? json.data : json);
-    try { localStorage.setItem('sv_site_content_v1', JSON.stringify(data)); } catch (_) {}
+    freshServerDataLoaded = true;
+    try { localStorage.setItem('sv_site_content_v1', JSON.stringify(data)); }
+    catch (_) {
+      // গ্যালারির base64 ছবি বেশি হলে localStorage-এর quota (≈৫MB) শেষ হয়ে যায় এবং
+      // সেট সাইলেন্টলি ব্যর্থ হয় — ক্যাশ তখন চিরকাল পুরনো থেকে যায়। তাই ভারী data:
+      // URLগুলো বাদ দিয়ে হালকা কপি ক্যাশ করি, যাতে ক্যাশ অন্তত নতুন ডাটার গঠনে থাকে।
+      try {
+        const light = JSON.parse(JSON.stringify(data));
+        (light.gallery || []).forEach(item => { if (item && typeof item.src === 'string' && item.src.startsWith('data:')) item.src = ''; });
+        localStorage.setItem('sv_site_content_v1', JSON.stringify(light));
+      } catch (_) {}
+    }
     renderSiteContent(data);
   } catch (err) {
-    if (!saved) renderSiteContent(DEFAULT_SITE_CONTENT);
+    // সার্ভার এখন পৌঁছাচ্ছে না — স্ক্রিনে যা আছে (সর্বশেষ সফল সার্ভার ডাটা বা
+    // প্রথম পেইন্টের ক্যাশ) সেটাই থাকবে; পুরনো ক্যাশ দিয়ে ওভাররাইট করা হয় না।
+    if (!freshServerDataLoaded) {
+      const saved = localStorage.getItem('sv_site_content_v1');
+      if (!saved) renderSiteContent(DEFAULT_SITE_CONTENT);
+    }
   }
 }
 
@@ -980,6 +1039,8 @@ const loadMoreIcon  = document.getElementById('loadMoreIcon');
 const SHOW_PER_CLICK = 3;
 
 function updateLoadMore() {
+  // এলিমেন্টগুলো না থাকলে (অন্য পেজে main.js লোড হলে) ক্র্যাশ না করে বেরিয়ে যাই
+  if (!loadMoreBtn || !loadMoreText || !loadMoreIcon || !loadMoreCount) return;
   const remaining = document.querySelectorAll('.g-item.g-hidden').length;
   if (remaining === 0) {
     loadMoreText.textContent = 'সব ছবি দেখা হয়ে গেছে';
@@ -1044,13 +1105,18 @@ function closeLightbox() {
   document.body.style.overflow = '';
 }
 
-document.getElementById('galleryGrid').addEventListener('click', e => {
-  const item = e.target.closest('.g-item');
-  if (!item) return;
-  buildLbList();
-  const idx = lbItems.indexOf(item);
-  if (idx !== -1) openLightbox(idx);
-});
+// galleryGrid না থাকলে (যেমন main.js অন্য কোনো পেজে লোড হলে) এখানে TypeError
+// হলে স্ক্রিপ্টের নিচের সব init (lightbox, review scroll) বন্ধ হয়ে যেত।
+const galleryGridEl = document.getElementById('galleryGrid');
+if (galleryGridEl) {
+  galleryGridEl.addEventListener('click', e => {
+    const item = e.target.closest('.g-item');
+    if (!item) return;
+    buildLbList();
+    const idx = lbItems.indexOf(item);
+    if (idx !== -1) openLightbox(idx);
+  });
+}
 
 document.getElementById('lbClose').addEventListener('click', closeLightbox);
 document.getElementById('lbPrev').addEventListener('click', () => {
@@ -1153,7 +1219,7 @@ document.querySelectorAll('.yt-lazy').forEach(el => {
 });
 
 /* ══════════════════════════════════════
-   ANIMATED COURSE BANNER (stick-figure hero)
+   ANIMATED COURSE BANNER (cartoon rope-pull hero)
    — works with any number of .sv-slide elements,
      each can carry its own background image via
      style="background-image:url('...')"
@@ -1197,9 +1263,13 @@ document.querySelectorAll('.yt-lazy').forEach(el => {
     const figure    = root.querySelector('[data-sv-figure]');
     const hook      = root.querySelector('[data-sv-hook]');
     const ropeLine  = root.querySelector('[data-sv-ropeline]');
+    const ropeTex   = root.querySelector('[data-sv-ropetex]');
+    const ropeSvg   = root.querySelector('.sv-throw-svg');
+    const frame     = root.querySelector('.sv-frame');
+    const shadowEl  = root.querySelector('[data-sv-shadow]');
     const throwPath = root.querySelector('[data-sv-throwpath]');
     const ropeKnot  = root.querySelector('[data-sv-ropeknot]');
-    if(!track || !figure || !throwPath) return;
+    if(!track || !figure || !throwPath || !ropeLine || !frame) return;
 
     const setup = setupTrackAndDots(root);
     if(!setup) return;
@@ -1237,14 +1307,126 @@ document.querySelectorAll('.yt-lazy').forEach(el => {
     }
 
     let progress = 0;
-    const tugShift = stepPct * 0.2, pushHalf = stepPct * 0.4; // sums to one stepPct per slide
+
+    /* ── রিয়েলিস্টিক দড়ি (verlet physics) + ছায়া + ধুলা ──
+       দড়িটা ১৬ খণ্ডের স্প্রিং-চেইন — দুই মাথায় hook আর হাত আটকানো,
+       মাঝের অংশ মাধ্যাকর্ষণে ঝুলে থাকে। টানলে টান টান হয়, ঢিলা হলে দুলতে থাকে। */
+    let ropeRAF = null, ropeOnPrev = false;
+    let ropeSlack = 30, ropeSlackTarget = 10;      // দড়ির অতিরিক্ত দৈর্ঘ্য (%)
+    const SEGS = 16;
+    const pts = [];
+    for(let i = 0; i <= SEGS; i++) pts.push({ x: 0, y: 0, px: 0, py: 0 });
+
+    function spawnDust(pxX, pxY, count){
+      for(let i = 0; i < count; i++){
+        const d = document.createElement('span');
+        d.className = 'sv-dust';
+        d.style.left = pxX + 'px';
+        d.style.top = pxY + 'px';
+        d.style.setProperty('--dx', (-(5 + Math.random() * 16)).toFixed(1) + 'px');
+        d.style.setProperty('--dy', (-(3 + Math.random() * 9)).toFixed(1) + 'px');
+        frame.appendChild(d);
+        setTimeout(() => d.remove(), 750);
+      }
+    }
+    function shakeFrame(){
+      frame.classList.remove('sv-shake');
+      void frame.offsetWidth;
+      frame.classList.add('sv-shake');
+    }
+
+    function tick(){
+      const fRect = frame.getBoundingClientRect();
+      const hRect = hook.getBoundingClientRect();
+      const gRect = figure.getBoundingClientRect();
+      if(fRect.width && hRect.width && gRect.width){
+        /* ছায়া ক্যারেক্টারের পায়ের নিচে নিচে চলে */
+        if(shadowEl) shadowEl.style.left = (gRect.left + gRect.width / 2 - fRect.left - 26) + 'px';
+
+        const on = ropeSvg.classList.contains('sv-rope-on');
+        if(on){
+          const vx = px => (px / fRect.width) * 400;
+          const vy = px => (px / fRect.height) * 200;
+          const axV = vx(hRect.left + hRect.width / 2 - fRect.left);
+          const ayV = vy(hRect.top + hRect.height / 2 - fRect.top);
+          const hxV = vx(gRect.left + gRect.width * 0.30 - fRect.left);
+          const hyV = vy(gRect.top + gRect.height * 0.30 - fRect.top);
+
+          /* দড়ির দৈর্ঘ্য টান অনুযায়ী বদলায় */
+          ropeSlack += (ropeSlackTarget - ropeSlack) * 0.15;
+          const segLen = (Math.hypot(hxV - axV, hyV - ayV) * (1 + ropeSlack / 100)) / SEGS;
+
+          /* প্রথমবার দেখা গেলে দড়িটা সরলরেখায় বসাই — নাহলে চড়া দোল খায় */
+          if(!ropeOnPrev){
+            for(let i = 0; i <= SEGS; i++){
+              const t = i / SEGS;
+              pts[i].x = axV + (hxV - axV) * t;
+              pts[i].y = ayV + (hyV - ayV) * t + Math.sin(t * Math.PI) * 12;
+              pts[i].px = pts[i].x; pts[i].py = pts[i].y;
+            }
+          }
+          ropeOnPrev = true;
+
+          /* verlet integration — মাধ্যাকর্ষণ + ভিসকোসিটি */
+          for(let i = 1; i < SEGS; i++){
+            const p = pts[i];
+            const vx2 = (p.x - p.px) * 0.96;
+            const vy2 = (p.y - p.py) * 0.96;
+            p.px = p.x; p.py = p.y;
+            p.x += vx2; p.y += vy2 + 0.45;
+          }
+          pts[0].x = axV; pts[0].y = ayV;
+          pts[SEGS].x = hxV; pts[SEGS].y = hyV;
+
+          /* distance constraints — দড়ি টেনে টান টান করা */
+          for(let it = 0; it < 3; it++){
+            for(let i = 0; i < SEGS; i++){
+              const p1 = pts[i], p2 = pts[i + 1];
+              let dx = p2.x - p1.x, dy = p2.y - p1.y;
+              let d = Math.hypot(dx, dy) || 0.0001;
+              const diff = (d - segLen) / d * 0.5;
+              if(i !== 0){ p1.x += dx * diff; p1.y += dy * diff; }
+              if(i !== SEGS - 1){ p2.x -= dx * diff; p2.y -= dy * diff; }
+            }
+            pts[0].x = axV; pts[0].y = ayV;
+            pts[SEGS].x = hxV; pts[SEGS].y = hyV;
+          }
+
+          /* মসৃণ path আঁকা */
+          let d = 'M' + pts[0].x.toFixed(1) + ',' + pts[0].y.toFixed(1);
+          for(let i = 1; i < SEGS; i++){
+            const mx2 = ((pts[i].x + pts[i + 1].x) / 2).toFixed(1);
+            const my2 = ((pts[i].y + pts[i + 1].y) / 2).toFixed(1);
+            d += ' Q' + pts[i].x.toFixed(1) + ',' + pts[i].y.toFixed(1) + ' ' + mx2 + ',' + my2;
+          }
+          d += ' L' + pts[SEGS].x.toFixed(1) + ',' + pts[SEGS].y.toFixed(1);
+          ropeLine.setAttribute('d', d);
+          ropeTex.setAttribute('d', d);
+        } else {
+          ropeOnPrev = false;
+        }
+      }
+      ropeRAF = requestAnimationFrame(tick);
+    }
+    function startTick(){ if(!ropeRAF) ropeRAF = requestAnimationFrame(tick); }
 
     figure.style.left = '78%';
     figure.classList.add('sv-flip');
 
+    /* ── PULL: মোট ৬টা ঝাঁকিতে পুরো স্লাইড বাঁ দিকে টানা হয়।
+       প্রতি ঝাঁকিতে ক্যারেক্টার + ব্যানার একসাথে এগোয় — যেন সে ব্যানারটা
+       দড়ি দিয়ে টেনে নিয়ে যাচ্ছে। মাঝে দড়ি ঢিলা হয়ে আবার টান পড়ে। ── */
+    const JERKS = 6;
+    const FIG_START = 78, FIG_END = 6;
+    const perJerkFig = (FIG_START - FIG_END) / JERKS;   // প্রতি ঝাঁকায় ১২%
+    const perJerkTrack = stepPct / JERKS;               // ব্যানারও সমান ভাগে
+
+    startTick();   // ছায়া + দড়ির লুপ চালু
+
     while(true){
       const dots = root.querySelectorAll('[data-sv-dots] .sv-dot');
       const base = -(progress * stepPct);
+      figure.classList.remove('sv-idle');              // বিশ্রাম শেষ — কাজ শুরু
 
       // wind up — two backward steps, legs walking, arm cocks behind
       figure.classList.add('sv-winding');
@@ -1253,63 +1435,62 @@ document.querySelectorAll('.yt-lazy').forEach(el => {
       await wait(800);
       figure.classList.remove('sv-winding');
 
-      // throw — steps forward to plant as the rope releases
+      // throw — rope flies up along the arc and catches the hook
       figure.classList.add('sv-throwing');
       figure.style.transition = 'left 380ms ease-out';
-      figure.style.left = '78%';
+      figure.style.left = FIG_START + '%';
       await animateThrow(600);
       figure.classList.remove('sv-throwing');
       throwPath.style.opacity = 0;
       ropeKnot.style.opacity = 0;
 
-      // catches on the banner
+      // hook catches on the banner — ধাক্কায় ফ্রেম কাঁপে, ধুলা ওড়ে
       hook.classList.add('sv-show');
-      ropeLine.classList.add('sv-show');
-      await wait(200);
-
-      // sling over the shoulder
-      figure.classList.add('sv-shoulder');
-      await wait(300);
-
-      // tug — banner nudges forward a little
-      figure.classList.add('sv-tugging');
-      track.style.transition = 'transform 800ms ease-out';
-      track.style.transform = `translateX(${base - tugShift}%)`;
-      await wait(800);
-      figure.classList.remove('sv-tugging');
-
-      // let go — rope vanishes
-      figure.classList.remove('sv-shoulder');
-      ropeLine.classList.remove('sv-show');
-      hook.classList.remove('sv-show');
+      ropeSlack = 34; ropeSlackTarget = 12;
+      ropeSvg.classList.add('sv-rope-on');
+      const hR = hook.getBoundingClientRect(), fR0 = frame.getBoundingClientRect();
+      spawnDust(hR.left + hR.width / 2 - fR0.left, hR.top + hR.height - fR0.top, 3);
+      shakeFrame();
       await wait(250);
 
-      // push — first half
-      figure.classList.add('sv-pushing');
-      figure.style.transition = 'left 2200ms linear';
-      track.style.transition = 'transform 2200ms linear';
-      requestAnimationFrame(() => {
-        figure.style.left = '46%';
-        track.style.transform = `translateX(${base - tugShift - pushHalf}%)`;
-      });
-      await wait(2200);
+      // rope over the shoulder — ready to haul
+      figure.classList.add('sv-shoulder');
+      ropeSlackTarget = 7;
+      await wait(450);
 
-      // tired — sit and rest
-      figure.classList.remove('sv-pushing');
-      figure.classList.add('sv-resting');
-      await wait(1400);
+      // ── কষ্ট করে টানা: ৬ ধাপে বাঁ দিকে — ব্যানারও সাথে সাথে আসে ──
+      for(let k = 0; k < JERKS; k++){
+        ropeSlackTarget = 4;                     // দড়ি টান টান
+        figure.classList.add('sv-straining');    // শরীর ঝুঁকে + কাঁপুনি + ভারী পা
+        figure.style.transition = 'left 480ms cubic-bezier(.45,.05,.65,1)';
+        track.style.transition = 'transform 380ms cubic-bezier(.2,.85,.3,1.18)'; // স্ন্যাপ + সামান্য overshoot
+        shakeFrame();
+        const gR = figure.getBoundingClientRect(), fR1 = frame.getBoundingClientRect();
+        spawnDust(gR.left + gR.width * 0.4 - fR1.left, gR.bottom - fR1.top - 6, 2);
+        requestAnimationFrame(() => {
+          figure.style.left = (FIG_START - perJerkFig * (k + 1)) + '%';
+          track.style.transform = `translateX(${base - perJerkTrack * (k + 1)}%)`;
+        });
+        await wait(480);
+        if(k < JERKS - 1){
+          ropeSlackTarget = 15;                  // দুই টানার মাঝে দড়ি একটু ঢিলা
+          await wait(150);
+        }
+        if(k === 2){                             // অর্ধেক পথে — হাঁপিয়ে বিশ্রাম
+          figure.classList.remove('sv-straining');
+          figure.classList.add('sv-resting');
+          ropeSlackTarget = 18;
+          await wait(1500);
+          figure.classList.remove('sv-resting');
+        }
+      }
+      figure.classList.remove('sv-straining');
+      figure.classList.remove('sv-shoulder');
 
-      // push — second half, finishing the slide
-      figure.classList.remove('sv-resting');
-      figure.classList.add('sv-pushing');
-      figure.style.transition = 'left 2200ms linear';
-      track.style.transition = 'transform 2200ms linear';
-      requestAnimationFrame(() => {
-        figure.style.left = '6%';
-        track.style.transform = `translateX(${base - stepPct}%)`;
-      });
-      await wait(2200);
-      figure.classList.remove('sv-pushing');
+      // let go — rope vanishes
+      ropeSvg.classList.remove('sv-rope-on');
+      hook.classList.remove('sv-show');
+      await wait(250);
 
       progress++;
       dots.forEach((d,i) => d.classList.toggle('sv-active', i === progress % total));
@@ -1327,10 +1508,11 @@ document.querySelectorAll('.yt-lazy').forEach(el => {
       figure.classList.remove('sv-flip');
       figure.classList.add('sv-running');
       figure.style.transition = 'left 1200ms ease-in-out';
-      requestAnimationFrame(() => { figure.style.left = '78%'; });
+      requestAnimationFrame(() => { figure.style.left = FIG_START + '%'; });
       await wait(1200);
       figure.classList.remove('sv-running');
       figure.classList.add('sv-flip');
+      figure.classList.add('sv-idle');        // দাঁড়িয়ে দাঁড়িয়ে শ্বাস নেওয়া
 
       // force legs to settle to neutral during the pause
       const legs = figure.querySelectorAll('.sv-thigh, .sv-shin');

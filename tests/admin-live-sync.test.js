@@ -56,9 +56,10 @@ ok('enrollment submission is stored', submission.status === 201 && submission.js
 const defaultSiteContent = ctx.localBackend('/api/site-content', 'GET');
 ok('site content endpoint exists', defaultSiteContent.status === 200 && typeof defaultSiteContent.json.data === 'object');
 
-const adminLogin = ctx.localBackend('/api/auth/login', 'POST', { email: 'admin@softverseit.com', password: 'ChangeMe123!' });
-ok('default admin can authenticate for content edits', adminLogin.status === 200 && adminLogin.json.success === true);
-ctx.setSession(adminLogin.json.token, adminLogin.json.admin);
+const offlineLogin = ctx.localBackend('/api/auth/login', 'POST', { email: 'x@y.com', password: 'z' });
+ok('offline login is disabled (credentials never stored client-side)', offlineLogin.status === 503 && offlineLogin.json.success === false);
+// টেস্ট সেশন সরাসরি বসানো হয় — ক্রেডেনশিয়াল টেস্ট ফাইলে রাখা হয় না
+ctx.setSession('local_test_session', { id: 'test_admin', name: 'Test Admin', email: 'test@softverseit.com', role: 'superadmin' });
 
 const updatedSiteContent = ctx.localBackend('/api/site-content', 'PUT', {
   stats: [{ value: '999+', label: 'সফল শিক্ষার্থী' }],

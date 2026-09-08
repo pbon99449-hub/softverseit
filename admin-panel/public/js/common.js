@@ -32,13 +32,9 @@ const API = (() => {
       if (auth && token()) headers.Authorization = 'Bearer ' + token();
       res = await fetch(base + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
     } catch (netErr) {
-      // Server unreachable. Login/register can still work from the built-in
-      // offline backend (localStorage) so the admin is never locked out.
-      const PUBLIC = ['/api/auth/login', '/api/auth/register'];
-      if (PUBLIC.includes(path)) {
-        return localReply(path, method, body, auth);
-      }
-      // Other WRITE requests must reach the real server - otherwise data is
+      // Server unreachable — including login. Admin credentials are never
+      // kept client-side, so offline login is impossible by design.
+      // Writes must reach the real server - otherwise data is
       // never permanently saved while the UI still shows "saved". Fail loudly.
       if (method !== 'GET') {
         throw new Error('\u09b8\u09be\u09b0\u09cd\u09ad\u09be\u09b0 \u099a\u09be\u09b2\u09c1 \u09a8\u09c7\u0987 \u2014 \u09b2\u0997\u0987\u09a8 \u0995\u09b0\u09be \u09af\u09be\u09ac\u09c7, \u0995\u09bf\u09a8\u09cd\u09a4\u09c1 \u09a4\u09a5\u09cd\u09af \u09b8\u09c7\u09ad \u09b9\u09ac\u09c7 \u09a8\u09be\u0964 \u09b8\u09ac \u09ab\u09bf\u099a\u09be\u09b0\u09c7\u09b0 \u099c\u09a8\u09cd\u09af START-SERVER.bat \u099a\u09be\u09b2\u09c1 \u0995\u09b0\u09c1\u09a8\u0964');
@@ -249,7 +245,7 @@ function renderPagination(pag, onPage) {
 /* ════════════════════════════════════════════════════════════
    OFFLINE DATA LAYER (localStorage backend)
    ─────────────────────────────────────────────────────────────
-   Makes the admin panel work with NO Node server and NO MongoDB —
+   Makes the admin panel work with NO Node server (offline-only) —
    e.g. when index.html / admin pages are opened straight from disk
    (file://). All admin data is saved in the browser. If a real
    backend IS reachable, request() above uses it instead.
@@ -269,13 +265,9 @@ const LS = {
   tokenAt: 'sv_admin_token_at',
 };
 
-/* Default first admin — auto-created on first run (matches .env). */
-const DEFAULT_ADMIN = {
-  email: 'admin@softverseit.com',
-  password: 'ChangeMe123!',
-  name: 'Super Admin',
-  role: 'superadmin',
-};
+/* নিরাপত্তা: অ্যাডমিন ইমেইল/পাসওয়ার্ড ক্লায়েন্ট-সাইডে রাখা হয় না —
+   সেগুলো শুধু সার্ভারের .env ফাইলে (ADMIN_EMAIL / ADMIN_PASSWORD) থাকে।
+   তাই অফলাইন (file://) মোডে লগইন করা যায় না — সার্ভার চালু থাকতে হবে। */
 
 function lsRead(key, fallback) {
   try {
@@ -288,11 +280,6 @@ function uid() { return 'id_' + Date.now().toString(36) + Math.random().toString
 
 /* Seed a default admin + empty stores the first time the panel is used. */
 function ensureSeeds() {
-  let admins = lsRead(LS.admins, []);
-  if (!admins.length) {
-    admins = [{ _id: 'admin_' + Date.now().toString(36), name: DEFAULT_ADMIN.name, email: DEFAULT_ADMIN.email, password: DEFAULT_ADMIN.password, role: DEFAULT_ADMIN.role }];
-    lsWrite(LS.admins, admins);
-  }
   if (lsRead(LS.enrollments, null) == null) lsWrite(LS.enrollments, []);
   if (lsRead(LS.results, null) == null) lsWrite(LS.results, []);
   if (lsRead(LS.visits, null) == null) lsWrite(LS.visits, []);
@@ -357,27 +344,13 @@ function localBackend(path, method, body) {
   };
 
   // ── Auth endpoints ──
+  // নিরাপত্তা: অফলাইন (file://) মোডে লগইন/রেজিস্টার বন্ধ — ক্রেডেনশিয়াল
+  // ক্লায়েন্ট-সাইডে রাখা হয় না। প্যানেলে ঢুকতে Node সার্ভার চালু থাকতেই হবে।
   if (path === '/api/auth/login' && method === 'POST') {
-    const admins = lsRead(LS.admins, []);
-    const email = String((body && body.email) || '').toLowerCase().trim();
-    const pw = String((body && body.password) || '').trim();
-    const a = admins.find(x => String(x.email || '').toLowerCase().trim() === email && String(x.password || '').trim() === pw);
-    if (!a) return { status: 401, json: { success: false, message: 'Invalid email or password' } };
-    return { status: 200, json: { success: true, token: 'local_' + a._id, admin: { id: a._id, name: a.name, email: a.email, role: a.role } } };
+    return { status: 503, json: { success: false, message: 'অফলাইন মোডে লগইন বন্ধ — সার্ভার চালু করুন (START-SERVER.bat)' } };
   }
   if (path === '/api/auth/register' && method === 'POST') {
-    const admins = lsRead(LS.admins, []);
-    const name = String((body && body.name) || '').trim();
-    const email = String((body && body.email) || '').toLowerCase().trim();
-    const password = String((body && body.password) || '');
-    if (!name || !email || !password) return { status: 400, json: { success: false, message: 'Name, email and password are required' } };
-    if (password.length < 6) return { status: 400, json: { success: false, message: 'Password must be at least 6 characters' } };
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { status: 400, json: { success: false, message: 'Please enter a valid email address' } };
-    if (admins.find(x => x.email === email)) return { status: 409, json: { success: false, message: 'An account with this email already exists' } };
-    const a = { _id: uid(), name, email, password, role: 'admin' };
-    admins.push(a);
-    lsWrite(LS.admins, admins);
-    return { status: 201, json: { success: true, token: 'local_' + a._id, admin: { id: a._id, name: a.name, email: a.email, role: a.role } } };
+    return { status: 503, json: { success: false, message: 'অফলাইন মোডে রেজিস্টার বন্ধ — সার্ভার চালু করুন (START-SERVER.bat)' } };
   }
   if (path === '/api/auth/me' && method === 'GET') {
     const me = liveAdmin();
@@ -486,7 +459,7 @@ function localBackend(path, method, body) {
       heroChip: typeof payload.heroChip === 'string' ? payload.heroChip.trim() : prevHeroChip,
       footer: (payload.footer && typeof payload.footer === 'object') ? payload.footer : (prevFooter || defaultFooterObj),
     };
-    localStorage.setItem('sv_site_content_v1', JSON.stringify(normalized));
+    try { localStorage.setItem('sv_site_content_v1', JSON.stringify(normalized)); } catch (_) {}
     return { status: 200, json: { success: true, data: normalized } };
   }
 
@@ -510,14 +483,14 @@ function localBackend(path, method, body) {
   if (path === '/api/backup/restore' && method === 'POST') {
     if (!liveAdmin()) return { status: 401, json: { success: false, message: 'Not authorized' } };
     const d = body || {};
-    const write = (key, items) => localStorage.setItem(key, JSON.stringify(Array.isArray(items) ? items : []));
+    const write = (key, items) => { try { localStorage.setItem(key, JSON.stringify(Array.isArray(items) ? items : [])); } catch (_) {} };
     write(LS.courses, d.courses);
     write(LS.enrollments, d.enrollments);
     write(LS.results, d.results);
     write(LS.visits, d.visits);
     if (Array.isArray(d.admins) && d.admins.length) write(LS.admins, d.admins);
     if (d.siteContent && typeof d.siteContent === 'object') {
-      localStorage.setItem('sv_site_content_v1', JSON.stringify(d.siteContent));
+      try { localStorage.setItem('sv_site_content_v1', JSON.stringify(d.siteContent)); } catch (_) {}
     }
     return { status: 200, json: { success: true, message: 'Backup restored successfully' } };
   }
@@ -547,7 +520,7 @@ function localBackend(path, method, body) {
     if (!liveAdmin()) return { status: 401, json: { success: false, message: 'Not authorized' } };
     const data = Object.assign({}, defaultPopup, body || {});
     data.enabled = body && Object.prototype.hasOwnProperty.call(body, 'enabled') ? (body.enabled === true || body.enabled === 'true' || body.enabled === 'on') : data.enabled;
-    localStorage.setItem(LS.popup, JSON.stringify(data));
+    try { localStorage.setItem(LS.popup, JSON.stringify(data)); } catch (_) {}
     return { status: 200, json: { success: true, data } };
   }
 

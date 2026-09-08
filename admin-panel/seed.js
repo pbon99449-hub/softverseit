@@ -7,9 +7,15 @@ const Admin = require('./models/Admin');
 async function seed() {
   await connectDB();
 
+  // নিরাপত্তা: ডিফল্ট ক্রেডেনশিয়াল নেই — .env-এ ADMIN_EMAIL/ADMIN_PASSWORD
+  // না থাকলে seed হবে না (যাতে পরিচিত/অনুমানযোগ্য অ্যাকাউন্ট তৈরি না হয়)।
   const name = process.env.ADMIN_NAME || 'Super Admin';
-  const email = (process.env.ADMIN_EMAIL || 'admin@softverseit.com').toLowerCase();
-  const password = process.env.ADMIN_PASSWORD || 'ChangeMe123!';
+  const email = String(process.env.ADMIN_EMAIL || '').toLowerCase().trim();
+  const password = String(process.env.ADMIN_PASSWORD || '');
+  if (!email || !password) {
+    console.error('\u274c admin-panel/.env file-e ADMIN_EMAIL ar ADMIN_PASSWORD set korun - seed bondho.');
+    process.exit(1);
+  }
 
   const existing = await Admin.findOne({ email });
   if (existing) {

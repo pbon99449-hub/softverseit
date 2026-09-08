@@ -1,6 +1,6 @@
 ﻿# SoftVerse IT - Admin Panel
 
-SoftVerse IT Institute website kar jonno ek purnaanga **Admin Panel** (Node.js + Express + MongoDB).
+SoftVerse IT Institute website kar jonno ek purnaanga **Admin Panel** (Node.js + Express + SQLite).
 Mul site er motoi **dark navy (#0f1c3a) + teal (#00b894)** theme, **Hind Siliguri** Bangla font byabohar kora hoyeche.
 
 ## Tech Stack
@@ -15,7 +15,7 @@ admin-panel/
   server.js              Express server (API + static file serve)
   seed.js                First Admin account (npm run seed)
   .env / .env.example    Environment variables
-  config/db.js           MongoDB connection
+  config/db.js           SQLite (no external DB server)
   models/                Admin, Enrollment, Result
   middleware/auth.js     JWT protect
   controllers/           auth, enrollment, result, dashboard
@@ -29,24 +29,22 @@ admin-panel/
 
 ## Setup & Run
 
-### 1) MongoDB chalun
-Local MongoDB chalun (default port 27017) - https://www.mongodb.com/try/download/community athoba MongoDB Atlas.
+### 1) .env
+`admin-panel/.env` file-e JWT_SECRET, ADMIN_EMAIL/PASSWORD thik koren.
+(Alada kono database server dorkar nei - built-in SQLite automatic cholbe.)
 
-### 2) .env
-`admin-panel/.env` file-e MONGODB_URI, JWT_SECRET, ADMIN_EMAIL/PASSWORD thik koren.
-
-### 3) Install
+### 2) Install
 ```bash
 cd admin-panel
 npm install
 ```
 
-### 4) First Admin
+### 3) First Admin
 ```bash
 npm run seed
 ```
 
-### 5) Start
+### 4) Start
 ```bash
 npm start
 ```

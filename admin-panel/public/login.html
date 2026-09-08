@@ -21,36 +21,31 @@
       </div>
       <div class="login-err" id="loginErr"></div>
       <form id="loginForm" novalidate>
-        <div style="margin-bottom:1.1rem">
+        <div style="margin-bottom:1rem">
           <label for="email">ইমেইল</label>
-          <input type="email" id="email" placeholder="admin@softverseit.com" autocomplete="email"/>
+          <input type="email" id="email" placeholder="admin@example.com" autocomplete="email"/>
         </div>
-        <div style="margin-bottom:1.3rem">
+        <div style="margin-bottom:1.2rem;position:relative">
           <label for="password">পাসওয়ার্ড</label>
-          <div class="pw-wrap">
-            <input type="password" id="password" placeholder="********" autocomplete="current-password"/>
-            <button type="button" class="pw-toggle" id="pwToggle" title="পাসওয়ার্ড দেখুন" aria-label="পাসওয়ার্ড দেখুন"><i class="fa-solid fa-eye" id="pwIcon"></i></button>
-          </div>
+          <input type="password" id="password" placeholder="********" autocomplete="current-password" style="padding-right:2.6rem"/>
+          <button type="button" class="pw-toggle" id="pwToggle" title="পাসওয়ার্ড দেখুন" aria-label="পাসওয়ার্ড দেখুন" style="position:absolute;right:.4rem;top:2.55rem"><i class="fa-solid fa-eye" id="pwIcon"></i></button>
         </div>
-        <button type="submit" class="btn btn-primary" id="loginBtn">
+        <button type="submit" class="btn btn-primary" id="loginBtn" style="width:100%">
           <span id="btnText">লগইন করুন</span>
-          <span id="btnLoader" style="display:none" class="spinner"></span>
+          <span id="btnLoader" class="spinner" style="display:none"></span>
         </button>
-            </form>
-      <div class="login-hint" style="margin-top:1rem;padding:.7rem .9rem;border-radius:8px;background:rgba(0,184,148,.08);border:1px solid rgba(0,184,148,.2);font-size:.8rem;color:#8fafc8">
-        <i class="fa-solid fa-shield-halved" style="color:#00b894"></i> শুধুমাত্র অনুমোদিত অ্যাডমিন প্রবেশ করতে পারবেন। সঠিক ইমেইল ও পাসওয়ার্ড দিয়ে লগইন করুন।
-      </div>
+      </form>
     </div>
   </div>
+
   <div id="toastHost"></div>
+
   <script src="js/common.js?v=7"></script>
   <script>
+    /* ═══ পাসওয়ার্ড লগইন ═══ */
     const form = document.getElementById("loginForm");
     const closeBtn = document.getElementById("closeBtn");
-    closeBtn.addEventListener("click", closePage);
-    function closePage() {
-      window.location.href = '../../index.html';
-    }
+    closeBtn.addEventListener("click", () => { window.location.href = '../../index.html'; });
     const errBox = document.getElementById("loginErr");
     const btn = document.getElementById("loginBtn");
     const btnText = document.getElementById("btnText");
@@ -69,8 +64,6 @@
       } catch (err) { errBox.textContent = err.message || 'লগইন ব্যর্থ হয়েছে'; errBox.classList.add('show'); }
       finally { btn.disabled = false; btnText.style.display = "inline"; btnLoader.style.display = "none"; }
     });
-
-    // Password show/hide toggle
     const pwInput = document.getElementById("password");
     const pwToggle = document.getElementById("pwToggle");
     const pwIcon = document.getElementById("pwIcon");
