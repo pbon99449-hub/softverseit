@@ -10,6 +10,7 @@ const courseRoutes = require('./routes/courseRoutes');
 const resultRoutes = require('./routes/resultRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const siteContentRoutes = require('./routes/siteContentRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
 const backupRoutes = require('./routes/backupRoutes');
 const visitRoutes = require('./routes/visitRoutes');
 
@@ -62,6 +63,7 @@ app.use('/api/courses', courseRoutes);
 app.use('/api/results', resultRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/site-content', siteContentRoutes);
+app.use('/api/uploads', uploadRoutes);
 app.use('/api/backup', backupRoutes);
 app.use('/api/visits', visitRoutes);
 

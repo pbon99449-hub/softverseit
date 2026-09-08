@@ -8,6 +8,9 @@ admin-panel/.env
 # Database files (deploy-e fresh toiri hoy, local data push korar dorkar nei)
 admin-panel/data/
 
+# Uploaded gallery images (local content, DB theke reference hoy)
+admin-panel/public/uploads/
+
 # Logs
 *.log
 admin-panel/*.log

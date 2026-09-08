@@ -356,7 +356,7 @@ let lastSiteContentSig = null;
 // re-render-এ দেখানো ছবিগুলো আবার লুকিয়ে যেত (ছবি কিছুক্ষণ পর hide হওয়ার বাগ)।
 let galleryRevealedCount = 0;
 
-function renderSiteContent(content) {
+async function renderSiteContent(content) {
   const siteContent = normalizeSiteContent(content || DEFAULT_SITE_CONTENT);
 
   // একই ডাটা বারবার এলে (প্রতি ১০ সেকেন্ডের পোল) আর কিছু না-করে রিটার্ন করি —
@@ -455,27 +455,29 @@ function renderSiteContent(content) {
 
   const galleryGrid = document.getElementById('galleryGrid');
   if (galleryGrid) {
-    // আগের রেন্ডারে ইউজার কতগুলো ছবি দেখা অবস্থায় ছিল সেটা মনে রাখি —
-    // নতুন ডাটা এলেও ইতিমধ্যে দেখানো ছবিগুলো লুকিয়ে যাবে না।
-    const prevItems = galleryGrid.querySelectorAll('.g-item');
-    const prevRevealed = prevItems.length - galleryGrid.querySelectorAll('.g-item.g-hidden').length;
-    if (prevItems.length) galleryRevealedCount = prevRevealed;
+    // সব গ্যালারি ছবি সবসময় দৃশ্যমান — কোনো ছবি লুকানো থাকবে না, "আরও ছবি দেখুন" নেই।
+    // ছবির src হতে পারে (১) সার্ভারের ফাইল URL (/admin/uploads/...) বা (২) পুরনো base64 ডেটা।
+    // মেইন সাইট যখন ভিন্ন পোর্ট/অরিজিনে চালু (যেমন Live Server :5502), তখন সার্ভারের
+    // রিলেটিভ URL-কে পূর্ণ URL-এ বদলাতে হবে, নাহলে ছবি ভেঙে যাবে।
+    const apiBase = (typeof siteApiBase === 'function') ? await siteApiBase() : '';
+    const resolveSrc = (src) => {
+      if (!src) return '';
+      if (src.startsWith('data:') || src.startsWith('http://') || src.startsWith('https://')) return src;
+      return apiBase ? (apiBase + src) : src;
+    };
 
-    // প্রথমে ৫টি ছবি দেখানো হয়, বাকিগুলো "আরও ছবি দেখুন" বাটনে আসে —
-    // তবে ইউজার আগে যতগুলো রিভিল করেছে সেগুলো রেন্ডারের পরেও দৃশ্যমান থাকবে।
-    const initialShow = 5;
-    const visibleCount = Math.min(siteContent.gallery.length, Math.max(initialShow, galleryRevealedCount));
-
-    galleryGrid.innerHTML = siteContent.gallery.map((item, index) => `
-      <div class="g-item ${index >= visibleCount ? 'g-hidden' : ''}" data-cat="${escapeHtml(item.category || 'batch')}" data-src="${escapeHtml(item.src || '')}" data-label="${escapeHtml(item.title || '')}" data-icon="📸">
+    galleryGrid.innerHTML = siteContent.gallery.map((item) => {
+      const src = resolveSrc(String(item.src || ''));
+      return `
+      <div class="g-item" data-cat="${escapeHtml(item.category || 'batch')}" data-src="${escapeHtml(src)}" data-label="${escapeHtml(item.title || '')}" data-icon="📸">
         <div class="g-placeholder">
-          <div class="ph-icon"><img src="${escapeHtml(item.src || '')}" alt="${escapeHtml(item.title || 'Gallery')}" loading="lazy"></div>
+          <div class="ph-icon"><img src="${escapeHtml(src)}" alt="${escapeHtml(item.title || 'Gallery')}" loading="lazy"></div>
           <div class="ph-text">${escapeHtml(item.title || 'গ্যালারি')}</div>
         </div>
         <div class="g-overlay"><span class="g-label">${escapeHtml(item.title || 'গ্যালারি')}</span></div>
         <div class="g-zoom-icon">🔍</div>
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
     if (typeof updateLoadMore === 'function') updateLoadMore();
     if (typeof buildLbList === 'function') buildLbList();
 

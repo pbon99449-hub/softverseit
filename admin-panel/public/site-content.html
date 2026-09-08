@@ -196,11 +196,18 @@
               let src;
               try { src = canvas.toDataURL('image/jpeg', 0.82); }
               catch (_) { src = String(reader.result || ''); }   // ব্যর্থ হলে মূল ছবিই রাখা হয়
-              state.gallery[idx] = { ...(state.gallery[idx] || { title: '', category: 'batch', src: '' }), src };
+              // ছবিটা ডিস্কে ফাইল হিসেবে সেভ করি — তাই ছবি চিরকাল স্থায়ী থাকে,
+              // localStorage কোটায় হারায় না, আর ডাটাবেজের JSON বড় হয়ে ভাঙতে পারে না।
+              let fileUrl = '';
+              try {
+                const up = await API.post('/api/uploads/image', { dataUrl: src });
+                if (up && up.success && up.url) fileUrl = up.url;
+              } catch (_) { /* আপলোড ব্যর্থ হলে নিচে base64 ফলব্যাকে যাবে */ }
+              state.gallery[idx] = { ...(state.gallery[idx] || { title: '', category: 'batch', src: '' }), src: fileUrl || src };
               renderPage();
               try {
                 await saveToServer();   // ছবি বেছে নেওয়ার সাথে সাথেই স্থায়ী সেভ
-                toast('ছবি সংরক্ষিত হয়েছে');
+                toast(fileUrl ? 'ছবি সংরক্ষিত হয়েছে' : 'ছবি সংরক্ষিত (সার্ভারে আপলোড ব্যর্থ — ব্রাউজারে সেভ)');
               } catch (err) {
                 toast(err.message || 'ছবি সংরক্ষণ ব্যর্থ — Save চেপে আবার চেষ্টা করুন', 'error');
               }
@@ -290,8 +297,16 @@
       }
     }
 
+    // সার্ভার থেকে কনটেন্ট সফলভাবে লোড হয়েছে কিনা — এটা ট্র্যাক না করলে অ্যাডমিন পেজ
+    // একবার সার্ভার থেকে ডাটা পেতে ব্যর্থ হলে খালি/পুরনো state দিয়ে সেভ করে আগের
+    // সব ছবি মুছে ফেলতে পারে। তাই লোড না হলে সেভ ব্লক করা হয়।
+    let serverDataLoaded = false;
+
     // ── বর্তমান state সার্ভারে + localStorage-এ স্থায়ীভাবে সেভ ──
     async function saveToServer() {
+      if (!serverDataLoaded) {
+        throw new Error('সার্ভার থেকে কনটেন্ট লোড হয়নি — নিরাপত্তার জন্য সেভ বন্ধ। পেজটা রিলোড করে আবার চেষ্টা করুন।');
+      }
       const data = {
         stats: (state.stats || []).filter(item => item.value || item.label),
         reviews: (state.reviews || []).filter(item => item.quote || item.author),
@@ -329,6 +344,7 @@
         }
         const res = await API.get('/api/site-content');
         Object.assign(state, res.data || {});
+        serverDataLoaded = true;
         // সার্ভার/ক্যাশ থেকে অ্যারে না এলে (বা ভাঙা ডাটা এলে) ফাঁকা অ্যারে —
         // নাহলে .map()/.push() ক্র্যাশ করে পুরো পেজ অচল হয়ে যেত।
         ['stats', 'reviews', 'videos', 'gallery', 'ticker'].forEach((k) => {
