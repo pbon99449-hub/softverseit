@@ -372,9 +372,9 @@
           if (el) {
             const on = vsRes && vsRes.data && vsRes.data.autoPush;
             el.style.display = 'block';
-            el.textContent = on
+            el.innerHTML = on
               ? '🟢 GitHub auto-sync চালু — save করলে কনটেন্ট GitHub-এ commit হবে, deploy/restart-এও থাকবে'
-              : '🟠 GitHub auto-sync বন্ধ — Render Dashboard-এ GIT_PUSH_TOKEN বসান (admin-panel/.env.example দেখুন)। ততদিন PUSH-CONTENT.bat চালিয়ে ম্যানুয়ালি push করতে হবে।';
+              : '🟠 GitHub auto-sync বন্ধ — <a href="github-sync.html" style="color:#38d9a9;text-decoration:underline">এই ৫ মিনিটের গাইড</a> ফলো করে চালু করুন। ততদিন PUSH-CONTENT.bat দিয়ে ম্যানুয়ালি backup নিন।';
             el.className = on ? 'vault-sync-ok' : 'vault-sync-warn';
           }
         } catch (_) {}

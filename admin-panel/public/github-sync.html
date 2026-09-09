@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GitHub Auto-Sync সেটআপ — SoftVerse Admin</title>
+  <link rel="icon" type="image/png" href="../../Images/favicon.webp"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Syne:wght@700;800&display=swap"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+  <link rel="stylesheet" href="css/admin.css"/>
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="admin-shell" id="shell"></div>
+  <div id="toastHost"></div>
+
+  <script src="js/common.js?v=7"></script>
+  <script>
+    if (!requireAuth()) { throw new Error('redirect'); }
+    renderLayout('github-sync.html');
+    document.getElementById('pageTitle').textContent = 'GitHub Auto-Sync সেটআপ';
+    const content = document.getElementById('pageContent');
+    const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+    async function refreshStatus() {
+      const badge = document.getElementById('syncStatus');
+      if (!badge) return;
+      try {
+        const r = await API.get('/api/site-content/vault-status');
+        const on = r && r.data && r.data.autoPush;
+        badge.innerHTML = on
+          ? '<span style="color:#38d9a9">🟢 GitHub auto-sync চালু — এখন থেকে Save দিলেই কনটেন্ট নিজে থেকে GitHub-এ backup হবে। কিছু করতে হবে না!</span>'
+          : '<span style="color:#f5a623">🟠 এখনো বন্ধ — নিচের ৫ মিনিটের ধাপগুলো করুন, তারপর এই পেজটা রিফ্রেশ করলেই সবুজ দেখবেন।</span>';
+        return on;
+      } catch (_) {
+        badge.innerHTML = '<span style="color:#f5a623">🟠 সার্ভার চেক করা যাচ্ছে না — পেজটা রিফ্রেশ করুন।</span>';
+        return false;
+      }
+    }
+content.innerHTML = `
+      <div class="card page-toolbar">
+        <div>
+          <strong>৫ মিনিটে চিরস্থায়ী কনটেন্ট</strong>
+          <p>এই একবার করলে শেষ — তারপর admin panel-এ <b>Save</b> দিলেই কনটেন্ট GitHub-এ backup হয়ে যাবে, Render-এ যতবার redeploy/restart হোক কনটেন্ট কখনো হারাবে না।</p>
+        </div>
+        <div id="syncStatus" class="vault-sync-warn">🔄 চেক হচ্ছে...</div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>ধাপ ১ — GitHub টোকেন বানান (২ মিনিট)</h3></div>
+        <div class="stack-list">
+          <div class="mini-form" style="grid-template-columns:1fr">
+            <ol style="line-height:1.9">
+              <li>নতুন ট্যাবে খুলুন: <a target="_blank" href="https://github.com/settings/tokens?type=beta" style="color:#38d9a9">github.com/settings/tokens</a></li>
+              <li>সবুজ <b>Generate new token</b> → <b>Generate new token (fine-grained)</b> চাপুন</li>
+              <li><b>Token name</b>: লিখুন <code>softverseit-auto-sync</code></li>
+              <li><b>Expiration</b>: 1 year (বা 90 days)</li>
+              <li><b>Repository access</b>: <b>Only select repositories</b> → <code>softverseit</code> টিক দিন</li>
+              <li><b>Repository permissions</b> → <b>Contents</b> → <b>Read and write</b> বাছুন</li>
+              <li>নিচে <b>Generate token</b> চাপুন → <code>github_pat_…</code> টোকেনটা <b>কপি করুন</b> (আর দেখানো হবে না!)</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>ধাপ ২ — Render-এ টোকেন বসান (১ মিনিট)</h3></div>
+        <div class="stack-list">
+          <div class="mini-form" style="grid-template-columns:1fr">
+            <ol style="line-height:1.9">
+              <li>Render Dashboard-এ আপনার Service-এ যান</li>
+              <li>বাঁ পাশের মেনু থেকে <b>Environment</b> খুলুন</li>
+              <li>নিচের ৪টা যোগ করুন, তারপর <b>Save Changes</b></li>
+            </ol>
+            <table style="width:100%;border-collapse:collapse;margin-top:.6rem">
+              <tr style="border-bottom:1px solid rgba(255,255,255,.2)">
+                <td style="padding:.4rem .6rem;color:#8fafc8">GIT_REPO_OWNER</td>
+                <td style="padding:.4rem .6rem"><code>pbon99449-hub</code></td>
+              </tr>
+              <tr style="border-bottom:1px solid rgba(255,255,255,.2)">
+                <td style="padding:.4rem .6rem;color:#8fafc8">GIT_REPO_NAME</td>
+                <td style="padding:.4rem .6rem"><code>softverseit</code></td>
+              </tr>
+              <tr style="border-bottom:1px solid rgba(255,255,255,.2)">
+                <td style="padding:.4rem .6rem;color:#8fafc8">GIT_BRANCH</td>
+                <td style="padding:.4rem .6rem"><code>master</code></td>
+              </tr>
+              <tr>
+                <td style="padding:.4rem .6rem;color:#8fafc8">GIT_PUSH_TOKEN</td>
+                <td style="padding:.4rem .6rem"><code>আপনার github_pat_… টোকেন</code></td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>ধাপ ৩ — Redeploy + যাচাই (১ মিনিট)</h3></div>
+        <div class="stack-list">
+          <div class="mini-form" style="grid-template-columns:1fr">
+            <ol style="line-height:1.9">
+              <li>Render-এ <b>Manual Deploy</b> → <b>Deploy latest commit</b> চাপুন</li>
+              <li>Deploy শেষ হওয়ার <b>২-৩ মিনিট পরে</b> এই পেজটা খুলুন</li>
+              <li>উপরের ব্যাজ <b>🟢 চালু</b> দেখালেই বুঝবেন সব ঠিকঠাক ✅</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>Token ছাড়া (জরুরি পতন) — ৩ ক্লিক</h3></div>
+        <div class="stack-list">
+          <div class="mini-form" style="grid-template-columns:1fr">
+            <p style="line-height:1.7;color:#8fafc8">Token-টা এখনি না দিলেও সমস্যা নেই — প্রতিবার কনটেন্ট বদলানোর পরে:</p>
+            <ol style="line-height:1.9">
+              <li>Admin panel-এ Save দিন</li>
+              <li>Project ফোল্ডারে <b>PUSH-CONTENT.bat</b> ডাবল-ক্লিক করুন (GitHub-এ backup হবে)</li>
+              <li>Render-এ Redeploy চাপুন</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    `;
+
+    refreshStatus();
+  </script>
+</body>
+</html>
