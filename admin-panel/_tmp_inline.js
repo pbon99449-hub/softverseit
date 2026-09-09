@@ -1,22 +1,4 @@
-<!DOCTYPE html>
-<html lang="bn">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>হোম পেজ কনটেন্ট — SoftVerse Admin</title>
-  <link rel="icon" type="image/png" href="../../Images/favicon.webp"/>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Syne:wght@700;800&display=swap"/>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
-  <link rel="stylesheet" href="css/admin.css"/>
-</head>
-<body>
-  <div class="blob blob-1"></div>
-  <div class="blob blob-2"></div>
-  <div class="admin-shell" id="shell"></div>
-  <div id="toastHost"></div>
 
-  <script src="js/common.js?v=7"></script>
-  <script>
     if (!requireAuth()) { throw new Error('redirect'); }
     renderLayout('site-content.html');
     document.getElementById('pageTitle').textContent = 'হোম পেজ কনটেন্ট';
@@ -370,6 +352,4 @@
     }
 
     load();
-  </script>
-</body>
-</html>
+  

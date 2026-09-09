@@ -443,19 +443,22 @@ function localBackend(path, method, body) {
   if (path === '/api/site-content' && method === 'PUT') {
     if (!liveAdmin()) return { status: 401, json: { success: false, message: 'Not authorized' } };
     const payload = body || {};
-    // heroChip রিকোয়েস্টে না এলে আগের সেভ করা মান (বা ডিফল্ট) অপরিবর্তিত থাকে
+    // heroChip/ticker রিকোয়েস্টে না এলে আগের সেভ করা মান (বা ডিফল্ট) অপরিবর্তিত থাকে
     let prevHeroChip = '30 july — নতুন ব্যাচ শুরু';
     let prevFooter = null;
+    let prevTicker = null;
     try {
       const prev = JSON.parse(localStorage.getItem('sv_site_content_v1') || 'null');
       if (prev && typeof prev.heroChip === 'string') prevHeroChip = prev.heroChip;
       if (prev && prev.footer && typeof prev.footer === 'object') prevFooter = prev.footer;
+      if (prev && Array.isArray(prev.ticker)) prevTicker = prev.ticker;
     } catch (_) {}
     const normalized = {
       stats: Array.isArray(payload.stats) ? payload.stats : [],
       reviews: Array.isArray(payload.reviews) ? payload.reviews : [],
       videos: Array.isArray(payload.videos) ? payload.videos : [],
       gallery: Array.isArray(payload.gallery) ? payload.gallery : [],
+      ticker: Array.isArray(payload.ticker) ? payload.ticker : (prevTicker || []),
       heroChip: typeof payload.heroChip === 'string' ? payload.heroChip.trim() : prevHeroChip,
       footer: (payload.footer && typeof payload.footer === 'object') ? payload.footer : (prevFooter || defaultFooterObj),
     };

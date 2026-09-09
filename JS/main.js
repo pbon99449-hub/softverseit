@@ -268,11 +268,20 @@ function normalizeYouTubeId(raw) {
   const val = String(raw || '').trim();
   if (!val) return '';
 
-  const direct = val.match(/[A-Za-z0-9_-]{11}/);
+  const match = val.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/))([A-Za-z0-9_-]{11})/);
+  if (match) return match[1];
+
+  const direct = val.match(/^[A-Za-z0-9_-]{11}$/);
   if (direct) return direct[0];
 
-  const match = val.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/))([A-Za-z0-9_-]{11})/);
-  return match ? match[1] : '';
+  return '';
+}
+
+function canonGalleryCat(raw) {
+  const t = String(raw || '').toLowerCase();
+  if (/(graduat|certificat|convocat)/.test(t)) return 'graduation';
+  if (/(program|event|seminar|workshop|campaign)/.test(t)) return 'program';
+  return 'batch';
 }
 
 function normalizeSiteContent(data) {
@@ -296,7 +305,11 @@ function normalizeSiteContent(data) {
         thumbnail: item.thumbnail || (videoId ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : ''),
       };
     }),
-    gallery: gallery.length ? gallery : DEFAULT_SITE_CONTENT.gallery,
+    gallery: (gallery.length ? gallery : DEFAULT_SITE_CONTENT.gallery).map(item => ({
+      title: item.title || 'গ্যালারি',
+      category: canonGalleryCat(item.category),
+      src: item.src || '',
+    })),
     ticker: (ticker.length ? ticker : DEFAULT_SITE_CONTENT.ticker).map(item => String(item || '').trim()).filter(Boolean),
     heroChip,
     footer,

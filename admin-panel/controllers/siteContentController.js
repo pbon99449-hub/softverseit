@@ -73,11 +73,17 @@ function normalizeVideoId(raw) {
   const value = String(raw || '').trim();
   if (!value) return '';
 
-  const direct = value.match(/[A-Za-z0-9_-]{11}/);
+  // Full YouTube URL first — bare 11-char match age korle URL-er majh theke
+  // vul ongsho kete jeto (jemon "?v=" ba path theke), tai URL ke priority.
+  const urlMatch = value.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/))([A-Za-z0-9_-]{11})/);
+  if (urlMatch) return urlMatch[1];
+
+  // Shudhu khanti 11-char ID holei ID — title/text-er vitore lukano
+  // 11-char tukra jeno ID hoye video vanish na kore.
+  const direct = value.match(/^[A-Za-z0-9_-]{11}$/);
   if (direct) return direct[0];
 
-  const urlMatch = value.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/))([A-Za-z0-9_-]{11})/);
-  return urlMatch ? urlMatch[1] : '';
+  return '';
 }
 
 function sanitizeFooter(value) {
@@ -88,6 +94,13 @@ function sanitizeFooter(value) {
     out[key] = typeof input[key] === 'string' && input[key].trim() ? input[key].trim() : fallback[key];
   });
   return out;
+}
+
+function canonGalleryCatInput(raw) {
+  const t = String(raw || '').toLowerCase();
+  if (/(graduat|certificat|convocat)/.test(t)) return 'graduation';
+  if (/(program|event|seminar|workshop|campaign)/.test(t)) return 'program';
+  return 'batch';
 }
 
 function sanitizeSiteContent(value) {
@@ -106,7 +119,7 @@ function sanitizeSiteContent(value) {
         thumbnail: videoId ? (thumb || `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`) : '',
       };
     }) : fallback.videos,
-    gallery: Array.isArray(input.gallery) ? input.gallery.filter(item => item && (item.title || item.src)).map(item => ({ title: String(item.title || ''), category: String(item.category || 'batch'), src: String(item.src || '') })) : fallback.gallery,
+    gallery: Array.isArray(input.gallery) ? input.gallery.filter(item => item && (item.title || item.src)).map(item => ({ title: String(item.title || ''), category: canonGalleryCatInput(item.category), src: String(item.src || '') })) : fallback.gallery,
     ticker: Array.isArray(input.ticker) ? input.ticker.map(item => String(item || '').trim()).filter(Boolean) : fallback.ticker,
     // ব্যানারের নিচের live-chip লেখা — ফাঁকা স্ট্রিং দিলে চিপটি হোমপেজে লুকানো থাকবে
     heroChip: typeof input.heroChip === 'string' ? input.heroChip.trim() : fallback.heroChip,
