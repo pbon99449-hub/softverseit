@@ -14,6 +14,7 @@ const uploadRoutes = require('./routes/uploadRoutes');
 const backupRoutes = require('./routes/backupRoutes');
 const visitRoutes = require('./routes/visitRoutes');
 const contentVault = require('./config/contentVault');
+const autoGitPush = require('./config/autoGitPush');
 
 const app = express();
 
@@ -71,7 +72,12 @@ app.use('/api/site-content', (req, res, next) => {
   const origJson = res.json;
   res.json = (body) => {
     if (req.method === 'PUT' && body && body.success) {
-      contentVault.snapshotSiteContent().catch(() => {});
+      // সেভ সফল → vault ফাইল আপডেট, তারপর স্বয়ংক্রিয় GitHub push —
+      // ফলে admin panel-এ সেভ করা কনটেন্ট + ছবি স্থায়ী থাকে, কোনো
+      // ম্যানুয়াল কাজ ছাড়াই। (লোকাল PC-তে চলে; deployed server-এ skip হয়।)
+      contentVault.snapshotSiteContent()
+        .catch(() => {})
+        .finally(() => autoGitPush.pushChanges('home page content save'));
     }
     return origJson.call(res, body);
   };
