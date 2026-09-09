@@ -1,7 +1,7 @@
 {
   "stats": [
     {
-      "value": "৮০০+",
+      "value": "1000+",
       "label": "সফল শিক্ষার্থী"
     },
     {
@@ -49,6 +49,11 @@
       "title": "ক্যাম্পেইন রিভিউ",
       "videoId": "0EVtuVKj_kw",
       "thumbnail": "https://img.youtube.com/vi/0EVtuVKj_kw/maxresdefault.jpg"
+    },
+    {
+      "title": "গোপাল মাছ ভাজা নিয়ে আসছে",
+      "videoId": "eKxvqmsV5_4",
+      "thumbnail": "https://youtu.be/eKxvqmsV5_4?si=VndpKdlu7JxKyGTh"
     }
   ],
   "gallery": [
@@ -81,16 +86,21 @@
       "title": "ssss",
       "category": "batch",
       "src": "/Images/gallery/img_1788964479584_6cee72c3.jpg"
+    },
+    {
+      "title": "",
+      "category": "batch",
+      "src": "/Images/gallery/img_1788968786678_5647d20b.jpg"
     }
   ],
   "ticker": [
-    "ভর্তি চলছে — 30 August, 2026 থেকে নতুন ব্যাচ শুরু",
+    "ভর্তি চলছে — 30 September, 2026 থেকে নতুন ব্যাচ শুরু",
     "বেসিক কম্পিউটার · গ্রাফিক ডিজাইন · কিডস কম্পিউটার",
-    "যোগাযোগ করুন: 01603-893912",
+    "যোগাযোগ করুন: 01679796976",
     "মুন্সীগঞ্জ পুলিশ সুপার কার্যালয়ের বিপরীত পাশে",
     "কোর্স শেষে সার্টিফিকেট প্রদান করা হয়"
   ],
-  "heroChip": "30  — নতুন ব্যাচ শুরু",
+  "heroChip": "20 September  — নতুন ব্যাচ শুরু",
   "footer": {
     "about": "বিশ্বস্ত কম্পিউটার ট্রেনিং সেন্টার। আমরা বিগত ২০২৩ সাল ২+ বছর ধরে শত শিক্ষার্থীকে কম্পিউটার প্রশিক্ষন দিয়ে।",
     "link1Title": "SV-Tech Zone",
