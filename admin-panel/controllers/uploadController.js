@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const gitAutoPush = require('../config/gitAutoPush');
 
 // অ্যাডমিন প্যানেল থেকে আপলোড করা গ্যালারি ছবি ডিস্কে ফাইল হিসেবে সেভ হয় —
 // তাই ছবি ডাটাবেজের JSON-এ base64 হয়ে ভরে যায় না এবং চিরকত্তর স্থায়ী থাকে।
@@ -48,6 +49,17 @@ async function uploadImage(req, res) {
     const bytes = Buffer.from(m[2], 'base64');
     fs.writeFileSync(path.join(UPLOAD_DIR, name), bytes);
     fs.writeFileSync(path.join(GALLERY_DIR, name), bytes);
+
+    // GitHub-এ auto-push (Render env-এ token থাকলে) — ছবি স্থায়ী হয়ে যায়,
+    // redeploy-র পরও ফিরে আসে। ফাইল disk-এ আগেই লেখা, তাই রেসপন্স দিতে দেরি করি না।
+    if (gitAutoPush.enabled()) {
+      gitAutoPush.pushGalleryImage(name, bytes)
+        .then((r) => {
+          if (r.ok) console.log('✅ Gallery image auto-pushed: ' + name);
+          else console.warn('⚠️  Gallery image push হয়নি (' + name + '): ' + r.reason);
+        })
+        .catch(() => {});
+    }
 
     // মূল ছবি Images/gallery-এ git-tracked ফোল্ডারে থাকে (deploy-safe),
     // public/uploads-এ কপি থাকে পুরনো রেফারেন্সগুলোর জন্য।
