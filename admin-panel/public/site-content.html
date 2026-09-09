@@ -147,8 +147,9 @@
     function renderPage() {
       content.innerHTML = `
         <div class="card page-toolbar">
-          <div><strong>হোম পেজ কনটেন্ট ম্যানেজ</strong><p>এই কনটেন্টগুলো ওয়েবসাইটের হোমপেজে রিয়েল-টাইমে দেখানো হবে।</p></div>
+          <div><strong>হোম পেজ কনটেন্ট ম্যানেজ</strong><p>এই কনটেন্টগুলো ওয়েবসাইটের হোমপেজে রিয়েল-টাইমে দেখানো হবে। সংরক্ষণ করলেই GitHub-এ backup হয়ে যায় — deploy করলেও হারাবে না।</p></div>
           <button class="btn btn-primary" id="saveContentBtn"><i class="fa-solid fa-floppy-disk"></i> সংরক্ষণ করুন</button>
+          <div id="vaultSyncBadge" style="display:none"></div>
         </div>
         ${renderHeroChipEditor()}
         ${renderTickerEditor()}
@@ -364,6 +365,19 @@
         // ডাটা তো সার্ভার থেকেই এসেছে, ক্যাশ সেভ ব্যর্থ হলে সমস্যা নেই।
         try { localStorage.setItem('sv_site_content_v1', JSON.stringify(state)); } catch (_) {}
         renderPage();
+        // GitHub auto-sync স্ট্যাটাস ব্যাজ — token বসানো আছে কিনা দেখায়
+        try {
+          const vsRes = await API.get('/api/site-content/vault-status');
+          const el = document.getElementById('vaultSyncBadge');
+          if (el) {
+            const on = vsRes && vsRes.data && vsRes.data.autoPush;
+            el.style.display = 'block';
+            el.textContent = on
+              ? '🟢 GitHub auto-sync চালু — save করলে কনটেন্ট GitHub-এ commit হবে, deploy/restart-এও থাকবে'
+              : '🟠 GitHub auto-sync বন্ধ — Render Dashboard-এ GIT_PUSH_TOKEN বসান (admin-panel/.env.example দেখুন)। ততদিন PUSH-CONTENT.bat চালিয়ে ম্যানুয়ালি push করতে হবে।';
+            el.className = on ? 'vault-sync-ok' : 'vault-sync-warn';
+          }
+        } catch (_) {}
       } catch (err) {
         content.innerHTML = '<div class="page-loader">' + esc(err.message) + '</div>';
       }

@@ -166,6 +166,20 @@ label { display: block; font-size: .82rem; color: var(--textSub); margin-bottom:
 .page-toolbar strong { display: block; font-size: 1.05rem; color: #fff; }
 .page-toolbar p { font-size: .8rem; color: var(--textSub); margin-top: .15rem; }
 
+/* GitHub auto-sync স্ট্যাটাস ব্যাজ */
+.vault-sync-ok, .vault-sync-warn {
+  display: block;
+  font-size: .78rem;
+  line-height: 1.45;
+  margin-top: .15rem;
+  padding: .35rem .6rem;
+  border-radius: 8px;
+  background: rgba(0,184,148,.08);
+  border: 1px solid var(--borderHi);
+}
+.vault-sync-ok { color: #38d9a9; border-color: #2bb58c; }
+.vault-sync-warn { color: #f5a623; border-color: #d98e1f; }
+
 .stack-list { display: flex; flex-direction: column; gap: .9rem; }
 .mini-form {
   display: grid; grid-template-columns: 1fr 1fr auto; gap: .7rem;

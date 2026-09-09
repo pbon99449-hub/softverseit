@@ -18,6 +18,7 @@ const fs = require('fs');
 const path = require('path');
 const SiteContent = require('../models/SiteContent');
 const { defaultSiteContent, sanitizeSiteContent } = require('../controllers/siteContentController');
+const gitAutoPush = require('./gitAutoPush');
 
 // এই ফাইলটা git-এ থাকবে (gitignore-এ নেই) — deploy-safe স্টোরেজ।
 const VAULT_FILE = path.join(__dirname, '..', 'content-vault', 'site-content.json');
@@ -54,7 +55,17 @@ async function snapshotSiteContent() {
   try {
     const existing = await SiteContent.findOne().lean();
     const payload = sanitizeSiteContent(existing || defaultSiteContent());
-    writeVaultFile(payload);
+    const wrote = writeVaultFile(payload);
+    // GitHub-এ auto-push — token বসানো থাকলে সেভ করা কনটেন্ট immediate ভাবে
+    // repo-তে commit হয়ে যায়, ফলে পরের deploy/spin-up-এও তা ফিরে আসে।
+    if (wrote && gitAutoPush.enabled()) {
+      const r = await gitAutoPush.pushContent(payload);
+      if (r.ok) {
+        console.log('✅ GitHub auto-push সফল — হোম পেজ কনটেন্ট repo-তে backup করা হয়েছে');
+      } else {
+        console.warn('⚠️  GitHub auto-push হয়নি: ' + r.reason + ' (PUSH-CONTENT.bat দিয়ে ম্যানুয়াল push করুন)');
+      }
+    }
     return payload;
   } catch (err) {
     console.error('⚠️  Content vault snapshot failed:', err.message);
@@ -64,6 +75,26 @@ async function snapshotSiteContent() {
 
 // vault ফাইল থেকে কনটেন্ট restore (fresh deploy-এ DB খালি থাকলে)
 async function restoreSiteContentFromVault() {
+  // ১) GitHub-এর latest কনটেন্টই সবচেয়ে সঠিক — token থাকলে সেটা আগে চেষ্টা করি
+  if (gitAutoPush.enabled()) {
+    const remote = await gitAutoPush.getLatestContent();
+    if (remote) {
+      try {
+        const payload = sanitizeSiteContent(remote);
+        await SiteContent.findOneAndUpdate({}, payload, {
+          new: true,
+          upsert: true,
+          setDefaultsOnInsert: true,
+        });
+        writeVaultFile(payload);
+        console.log('✅ Content restored from GitHub (latest committed content)');
+        return true;
+      } catch (err) {
+        console.error('⚠️  GitHub vault restore failed:', err.message);
+      }
+    }
+  }
+  // ২) নাহলে committed vault ফাইল থেকে
   const snapshot = readVaultFile();
   if (!snapshot) return false;
   try {
