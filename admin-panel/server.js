@@ -159,7 +159,7 @@ app.use('/admin', (req, res, next) => {
 // Explicit admin page routes — these can NEVER "Cannot GET"
 // login.html-ও এখানে cookie clear করে দেখানো হয় — যাতে লগইন পেজে থাকা
 // অবস্থায় পুরনো সেশন কাজে না লাগে; সাবমিট করলেই নতুন সেশন তৈরি হবে।
-const ADMIN_PAGES = ['register.html', 'index.html', 'dashboard.html', 'courses.html', 'enrollments.html', 'results.html', 'site-content.html', 'popup-sms.html', 'footer.html', 'backup.html', 'github-sync.html'];
+const ADMIN_PAGES = ['register.html', 'index.html', 'dashboard.html', 'courses.html', 'enrollments.html', 'results.html', 'site-content.html', 'popup-sms.html', 'footer.html', 'backup.html'];
 app.get('/admin/login.html', (req, res) => {
   res.setHeader('Set-Cookie', CLEAR_SESSION_COOKIE);
   res.sendFile(path.join(ADMIN_PUBLIC, 'login.html'));

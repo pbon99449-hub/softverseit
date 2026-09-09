@@ -10,22 +10,34 @@ const API = (() => {
     if (typeof location === 'undefined' || location.protocol === 'file:') return Promise.resolve('');
     if (basePromise) return basePromise;
     basePromise = (async () => {
+      // ১) এই পেজ নিজেই Node server থেকে সার্ভ হয়েছে → same-origin API-ই ব্যবহার হবে।
       try {
         const r = await fetch('/api/health', { cache: 'no-store' });
         const j = await r.json().catch(() => null);
         if (r.ok && j && j.success) return '';
       } catch (_) { /* same origin has no API */ }
+      // ২) না হলে (Live Server / অন্য পোর্ট) Node server-কে সরাসরি খোঁজা হয় —
+      //    localhost ও 127.0.0.1 দুই নামেই চেষ্টা করা হয়, যেটা চালু আছে সেটাই জিতবে।
+      //    এতে Live Server থেকে খোলা admin panel-এর সেভও সরাসরি database-এ যায়।
+      const candidates = ['http://localhost:5000', 'http://127.0.0.1:5000'];
+      for (const base of candidates) {
+        try {
+          const r = await fetch(base + '/api/health', { cache: 'no-store' });
+          const j = await r.json().catch(() => null);
+          if (r.ok && j && j.success) return base;
+        } catch (_) { /* এই base-এ server নেই — পরেরটা দেখি */ }
+      }
       return 'http://localhost:5000';
     })();
     return basePromise;
   }
 
-  async function request(path, { method = 'GET', body, auth = true } = {}) {
+  async function request(path, { method = 'GET', body, auth = true, forceBase = null } = {}) {
     if (typeof location !== 'undefined' && location.protocol === 'file:') {
       return localReply(path, method, body, auth);
     }
 
-    const base = await apiBase();
+    const base = forceBase || await apiBase();
     let res;
     try {
       const headers = { 'Content-Type': 'application/json' };
@@ -49,7 +61,7 @@ const API = (() => {
     if (res.status === 405) {
       // Wrong origin (e.g. Live Server) handed the request — retry once
       // directly against the real Node server so writes stop failing with 405.
-      if (base === '') return request(path, { method, body, auth, _forcePort: true });
+      if (base === '') return request(path, { method, body, auth, forceBase: 'http://localhost:5000' });
     }
     if (!res.ok) { throw new Error((json && json.message) || ('Error ' + res.status)); }
     return json;
