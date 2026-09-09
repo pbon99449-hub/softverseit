@@ -5,10 +5,14 @@ const crypto = require('crypto');
 // অ্যাডমিন প্যানেল থেকে আপলোড করা গ্যালারি ছবি ডিস্কে ফাইল হিসেবে সেভ হয় —
 // তাই ছবি ডাটাবেজের JSON-এ base64 হয়ে ভরে যায় না এবং চিরকত্তর স্থায়ী থাকে।
 const UPLOAD_DIR = path.join(__dirname, '..', 'public', 'uploads');
+// ছবিগুলো এছাড়াও repo-root-এর Images/gallery-এ সেভ হয় — এই ফোল্ডারটার
+// git-এ থাকে, তাই Render-এ redeploy করলেও গ্যালারির ছবি মুছে যায় না।
+const GALLERY_DIR = path.join(__dirname, '..', '..', 'Images', 'gallery');
 const MAX_BASE64_CHARS = 12 * 1024 * 1024;   // ≈ 9MB ফাইল
 
 function ensureUploadDir() {
   if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+  if (!fs.existsSync(GALLERY_DIR)) fs.mkdirSync(GALLERY_DIR, { recursive: true });
 }
 ensureUploadDir();
 
@@ -41,11 +45,14 @@ async function uploadImage(req, res) {
 
     ensureUploadDir();
     const name = 'img_' + Date.now() + '_' + crypto.randomBytes(4).toString('hex') + ext;
-    fs.writeFileSync(path.join(UPLOAD_DIR, name), Buffer.from(m[2], 'base64'));
+    const bytes = Buffer.from(m[2], 'base64');
+    fs.writeFileSync(path.join(UPLOAD_DIR, name), bytes);
+    fs.writeFileSync(path.join(GALLERY_DIR, name), bytes);
 
-    // রিলেটিভ URL রাখা হয় (ডোমেইন/পোর্ট বদলালেও ভাঙবে না) —
-    // মেইন সাইট রেন্ডারের সময় নিজের API base দিয়ে পূর্ণ URL বানিয়ে নেয়।
-    const url = '/admin/uploads/' + name;
+    // মূল ছবি Images/gallery-এ git-tracked ফোল্ডারে থাকে (deploy-safe),
+    // public/uploads-এ কপি থাকে পুরনো রেফারেন্সগুলোর জন্য।
+    // URL root-relative — admin, মেইন সাইট ও লোকাল/লাইভ সার্ভার সব জায়গায় কাজ করে।
+    const url = '/Images/gallery/' + name;
     res.status(201).json({ success: true, url });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err.message });

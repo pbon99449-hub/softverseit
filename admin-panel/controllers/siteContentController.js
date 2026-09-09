@@ -121,8 +121,9 @@ function sanitizeSiteContent(value) {
     }) : fallback.videos,
     gallery: Array.isArray(input.gallery) ? input.gallery.filter(item => item && (item.title || item.src)).map(item => ({ title: String(item.title || ''), category: canonGalleryCatInput(item.category), src: String(item.src || '') })) : fallback.gallery,
     ticker: Array.isArray(input.ticker) ? input.ticker.map(item => String(item || '').trim()).filter(Boolean) : fallback.ticker,
-    // ব্যানারের নিচের live-chip লেখা — ফাঁকা স্ট্রিং দিলে চিপটি হোমপেজে লুকানো থাকবে
-    heroChip: typeof input.heroChip === 'string' ? input.heroChip.trim() : fallback.heroChip,
+    // ব্যানারের নিচের live-chip লেখা — ফাঁকা রাখলেও default লেখা থেকে যায়,
+    // যাতে কোনো কারণে চিপটিও হোমপেজে লুকানো না থাকে
+    heroChip: (typeof input.heroChip === 'string' && input.heroChip.trim()) ? input.heroChip.trim() : fallback.heroChip,
     // ফুটার (হোমপেজের নিচের অংশ) — অ্যাডমিন প্যানেলের "ফুটার এডিট" পেজ থেকে বদলানো যায়
     footer: sanitizeFooter(input.footer),
     popup: sanitizePopup(input.popup),

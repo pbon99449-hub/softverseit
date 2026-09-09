@@ -13,6 +13,7 @@ const siteContentRoutes = require('./routes/siteContentRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const backupRoutes = require('./routes/backupRoutes');
 const visitRoutes = require('./routes/visitRoutes');
+const contentVault = require('./config/contentVault');
 
 const app = express();
 
@@ -62,6 +63,20 @@ app.use('/api/enrollments', enrollmentRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/results', resultRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+// ── Content Vault snapshot hook ──
+// প্রতিটা সফল site-content সেভের (হোম কনটেন্ট / ফুটার / পপআপ) পরে পুরো
+// কনটেন্ট admin-panel/content-vault/site-content.json-এ লেখা হয়। এই ফাইলটা
+// git-এ ওঠে — তাই Render-এ নতুন deploy করলেও সেভ করা কনটেন্ট ফেরত আসে।
+app.use('/api/site-content', (req, res, next) => {
+  const origJson = res.json;
+  res.json = (body) => {
+    if (req.method === 'PUT' && body && body.success) {
+      contentVault.snapshotSiteContent().catch(() => {});
+    }
+    return origJson.call(res, body);
+  };
+  next();
+});
 app.use('/api/site-content', siteContentRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/backup', backupRoutes);
@@ -191,6 +206,12 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Admin panel server running on http://localhost:${PORT}`);
-});
+// Content vault init — deploy-এ DB খালি থাকলে committed snapshot থেকে
+// কনটেন্ট restore হয় (কোনো কনটেন্ট হারায় না), তারপরই server listen শুরু করে।
+contentVault.ensureContentVault()
+  .catch((err) => console.error('⚠️  Content vault init error:', err.message))
+  .finally(() => {
+    app.listen(PORT, () => {
+      console.log(`Admin panel server running on http://localhost:${PORT}`);
+    });
+  });

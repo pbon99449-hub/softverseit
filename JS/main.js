@@ -291,7 +291,11 @@ function normalizeSiteContent(data) {
   const videos = Array.isArray(source.videos) ? source.videos : DEFAULT_SITE_CONTENT.videos;
   const gallery = Array.isArray(source.gallery) ? source.gallery : DEFAULT_SITE_CONTENT.gallery;
   const ticker = Array.isArray(source.ticker) ? source.ticker : DEFAULT_SITE_CONTENT.ticker;
-  const heroChip = typeof source.heroChip === 'string' ? source.heroChip.trim() : DEFAULT_SITE_CONTENT.heroChip;
+  // ফাঁকা হলেও default লেখা দেখায় — কনটেন্ট রিসেট/অজানা হলে ব্যানারের
+  // নিচের চিপটিও কখনো লুকানো থাকে না।
+  const heroChip = (typeof source.heroChip === 'string' && source.heroChip.trim())
+    ? source.heroChip.trim()
+    : DEFAULT_SITE_CONTENT.heroChip;
   const footer = normalizeFooter(source.footer);
 
   return {
@@ -476,7 +480,12 @@ async function renderSiteContent(content) {
     const resolveSrc = (src) => {
       if (!src) return '';
       if (src.startsWith('data:') || src.startsWith('http://') || src.startsWith('https://')) return src;
-      return apiBase ? (apiBase + src) : src;
+      // './Images/x' → '/Images/x' — লোকাল/লাইভসার্ভার (apiBase=http://localhost:5000)
+      // ও একই সার্ভারে (apiBase='') দুই জায়গাতেই সঠিক URL হয়। এতে গ্যালারির
+      // ছবি কখনো 'localhost:5000./Images/...' দিয়ে ভেঙে যায় না।
+      const clean = String(src).replace(/^\.\//, '');
+      const prefix = apiBase || '';
+      return clean.startsWith('/') ? (prefix + clean) : (prefix + '/' + clean);
     };
 
     galleryGrid.innerHTML = siteContent.gallery.map((item) => {
