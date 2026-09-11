@@ -13,6 +13,7 @@ const siteContentRoutes = require('./routes/siteContentRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const backupRoutes = require('./routes/backupRoutes');
 const visitRoutes = require('./routes/visitRoutes');
+const courseController = require('./controllers/courseController');
 const contentVault = require('./config/contentVault');
 const autoGitPush = require('./config/autoGitPush');
 
@@ -213,11 +214,18 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 // Content vault init — deploy-এ DB খালি থাকলে committed snapshot থেকে
-// কনটেন্ট restore হয় (কোনো কনটেন্ট হারায় না), তারপরই server listen শুরু করে।
+// কনটেন্ট + কোর্স + রেজাল্ট restore হয় (কোনো ডাটা হারায় না), তারপরই
+// server listen শুরু করে। খালি course collection থাকলে তারপর seed হয় —
+// যাতে vault-এ থাকা সেভ করা কোর্সগুলো default seed-এর দিকে যায় না।
 contentVault.ensureContentVault()
   .catch((err) => console.error('⚠️  Content vault init error:', err.message))
+  .then(() => courseController.seedIfEmpty())
+  .catch((err) => console.error('⚠️  Course seed error:', err.message))
   .finally(() => {
     app.listen(PORT, () => {
       console.log(`Admin panel server running on http://localhost:${PORT}`);
     });
+    // প্রতি ৩ মিনিটে self-heal sync — ব্যর্থ GitHub push আবার চেষ্টা হয়,
+    // ফলে restart/deploy-এ কোনো সেভ করা ডাটা হারায় না।
+    contentVault.startPeriodicSync();
   });

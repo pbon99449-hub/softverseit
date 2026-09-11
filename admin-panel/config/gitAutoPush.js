@@ -21,6 +21,8 @@ const REPO_NAME = (process.env.GIT_REPO_NAME || '').trim();
 const GIT_TOKEN = (process.env.GIT_PUSH_TOKEN || '').trim();
 const BRANCH = (process.env.GIT_BRANCH || 'master').trim();
 const VAULT_PATH = 'admin-panel/content-vault/site-content.json';
+const COURSES_PATH = 'admin-panel/content-vault/courses.json';
+const RESULTS_PATH = 'admin-panel/content-vault/results.json';
 const GALLERY_DIR_PREFIX = 'Images/gallery/';
 const API_BASE = 'https://api.github.com';
 
@@ -104,14 +106,14 @@ async function pushGalleryImage(fileName, contentBuffer) {
   return pushFile(GALLERY_DIR_PREFIX + safe, contentBuffer, `gallery image: auto-save ${safe} (${new Date().toISOString()})`);
 }
 
-// GitHub-এ থাকা latest হোম পেজ কনটেন্ট (boot-এ restore-এর জন্য)
-async function getLatestContent() {
+// যেকোনো repo ফাইলের latest JSON (boot-এ restore-এর জন্য) — না থাকলে null
+async function getRemoteJson(repoPath) {
   if (!enabled()) return null;
   try {
-    const res = await doFetch(fileUrl(VAULT_PATH, BRANCH), { headers: authHeaders() });
+    const res = await doFetch(fileUrl(repoPath, BRANCH), { headers: authHeaders() });
     if (res.status === 404) return null;
     if (!res.ok) {
-      console.error('⚠️  GitHub content GET failed (status ' + res.status + ')');
+      console.error('⚠️  GitHub GET failed (' + repoPath + ', status ' + res.status + ')');
       return null;
     }
     const json = await res.json().catch(() => null);
@@ -119,9 +121,14 @@ async function getLatestContent() {
     const decoded = Buffer.from(String(json.content).replace(/\n/g, ''), 'base64').toString('utf8');
     return JSON.parse(decoded);
   } catch (err) {
-    console.error('⚠️  GitHub content GET error:', err.message);
+    console.error('⚠️  GitHub GET error (' + repoPath + '):', err.message);
     return null;
   }
 }
 
-module.exports = { enabled, getLatestContent, pushContent, pushFile, pushGalleryImage, VAULT_PATH, BRANCH };
+// GitHub-এ থাকা latest হোম পেজ কনটেন্ট (boot-এ restore-এর জন্য)
+async function getLatestContent() {
+  return getRemoteJson(VAULT_PATH);
+}
+
+module.exports = { enabled, getRemoteJson, getLatestContent, pushContent, pushFile, pushGalleryImage, VAULT_PATH, COURSES_PATH, RESULTS_PATH, BRANCH };

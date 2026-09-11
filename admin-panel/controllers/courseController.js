@@ -1,4 +1,11 @@
 const Course = require('../models/Course');
+const contentVault = require('../config/contentVault');
+
+// কোর্স সেভ হওয়া মাত্র vault snapshot schedule — ফলে Render restart/redeploy
+// হলেও (ephemeral disk) কোর্সগুলো GitHub vault থেকে ফিরে আসে।
+function vaultSnapshot(reason) {
+  try { contentVault.schedulePush('courses', reason); } catch (_) {}
+}
 
 // Seed data — inserted automatically when the collection is empty,
 // so the admin panel always starts with the same 6 courses as the homepage.
@@ -22,7 +29,10 @@ async function seedIfEmpty() {
     console.error('Course seeding failed:', err.message);
   }
 }
-seedIfEmpty();
+// boot-এ server.js থেকে call করা হয় — content-vault restore-এর পরে,
+// যাতে vault-এ কোর্স থাকলে seed-এর বদলে সেভ করা কোর্সগুলোই থাকে।
+// module লোডের সময় আর auto-run হয় না (নাহলে vault restore-এর আগেই
+// default seed ঢুকে যেত)।
 
 // GET /api/courses — public (main website reads these to render its cards)
 async function list(req, res) {
@@ -38,6 +48,7 @@ async function list(req, res) {
 async function create(req, res) {
   try {
     const course = await Course.create(req.body || {});
+    vaultSnapshot('course create');
     res.status(201).json({ success: true, data: course });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
@@ -52,6 +63,7 @@ async function update(req, res) {
       runValidators: true,
     });
     if (!course) return res.status(404).json({ success: false, message: 'Course not found' });
+    vaultSnapshot('course update');
     res.json({ success: true, data: course });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
@@ -63,10 +75,11 @@ async function remove(req, res) {
   try {
     const course = await Course.findByIdAndDelete(req.params.id);
     if (!course) return res.status(404).json({ success: false, message: 'Course not found' });
+    vaultSnapshot('course delete');
     res.json({ success: true, message: 'Course deleted' });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err.message });
   }
 }
 
-module.exports = { list, create, update, remove };
+module.exports = { list, create, update, remove, seedIfEmpty };

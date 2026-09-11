@@ -50,3 +50,23 @@ footer, popup) এর **কপি** লেখা হয়। এই ফোল�
 
 Admin-এ আপলোড করা নতুন ছবি `Images/gallery/`-এ (repo-root, git-tracked)
 সেভ হয় — তাই redeploy-এর পরেও ছবি টিকে থাকে এবং হোমপেজে ছবি ভাঙে না।
+
+## কোর্স ও রেজাল্টও এখন vault-এ থাকে
+
+Admin-এ সেভ করা **কোর্স** (`courses.json`) ও **রেজাল্ট** (`results.json`) ও
+একই ভাবে vault + GitHub-এ যায়। Render-এ restart/redeploy-তে ephemeral disk
+মুছে গেলে boot-এর সময় DB খালি পেলে এই ফাইলগুলো থেকে সব ফিরে আসে —
+তাই কোর্স/রেজাল্ট আর কখনো default seed-এ ফিরে যায় না।
+
+## Smart sync (deploy-thrash ও ব্যর্থ push থেকে সুরক্ষা)
+
+- **Debounced push:** প্রতি সেভে সাথে সাথে push না করে শেষ সেভের ১৫ সেকেন্ড
+  পরে একসাথে push হয় (সর্বোচ্চ ৬০ সেকেন্ড অপেক্ষা)। কারণ প্রতিটা push-এ
+  Render নতুন deploy নেয় — প্রতি ক্লিকে push করলে deploy-এর ভিতরে করা
+  পরের সেভগুলো হারাতে পারে।
+- **Self-heal sync:** প্রতি ৩ মিনিটে চেক করা হয় — কোনো সেভের push ব্যর্থ
+  হয়ে থাকলে (network / GitHub rate-limit) আবার push করা হয়।
+- **অপ্রয়োজনীয় deploy নেই:** boot-এ GitHub-এ যা থাকে সেটাই baseline —
+  একই কনটেন্ট আবার push করে deploy-loop তৈরি হয় না।
+- সময়গুলো Render env-এ `GIT_PUSH_DEBOUNCE_MS`, `GIT_PUSH_MAX_WAIT_MS`,
+  `GIT_SYNC_INTERVAL_MS` দিয়ে বদলানো যায়।

@@ -1,4 +1,11 @@
 const Result = require('../models/Result');
+const contentVault = require('../config/contentVault');
+
+// রেজাল্ট সেভ হওয়া মাত্র vault snapshot schedule — Render restart/redeploy
+// (ephemeral disk) হলেও রেজাল্টগুলো GitHub vault থেকে ফিরে আসে।
+function vaultSnapshot(reason) {
+  try { contentVault.schedulePush('results', reason); } catch (_) {}
+}
 
 // GET /api/results (supports ?search=&course=&result=&page=&limit=)
 async function list(req, res) {
@@ -58,6 +65,7 @@ async function getByRollAndReg(req, res) {
 async function create(req, res) {
   try {
     const result = await Result.create(req.body);
+    vaultSnapshot('result create');
     res.status(201).json({ success: true, data: result });
   } catch (err) {
     if (err.code === 11000) {
@@ -75,6 +83,7 @@ async function update(req, res) {
       runValidators: true,
     });
     if (!result) return res.status(404).json({ success: false, message: 'Result not found' });
+    vaultSnapshot('result update');
     res.json({ success: true, data: result });
   } catch (err) {
     if (err.code === 11000) {
@@ -89,6 +98,7 @@ async function remove(req, res) {
   try {
     const result = await Result.findByIdAndDelete(req.params.id);
     if (!result) return res.status(404).json({ success: false, message: 'Result not found' });
+    vaultSnapshot('result delete');
     res.json({ success: true, message: 'Result deleted' });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error', error: err.message });
