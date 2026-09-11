@@ -4,7 +4,11 @@ const JWT_SECRET = require('../config/secret');
 
 function signToken(admin) {
   return jwt.sign({ id: admin._id, role: admin.role }, JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || '1d',
+    // টোকেন ৩০ দিন বৈধ — login ticket bar bar expire hoye save ব্যর্থ
+    // হওয়ার ঝামেলা নেই। (নোট: /admin পেজগুলো এখনও browser-সাইড ১০ মিনিটের
+    // requireAuth() + ADMIN_SESSION_MINUTES দিয়ে guard — সেটা আলাদা
+    // নিরাপত্তা স্তর, টোকেনের মেয়াদের সাথে মেশাবেন না।)
+    expiresIn: process.env.JWT_EXPIRES_IN || '30d',
   });
 }
 
