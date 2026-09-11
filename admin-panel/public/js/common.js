@@ -172,6 +172,12 @@ function renderLayout(currentPage = '') {
     return `<a href="${n.href}" class="${active}"><i class="${n.icon}"></i>${n.label}</a>`;
   }).join('');
 
+  // ── সংযুক্ত সার্ভার badge ──
+  // আপনি ঠিক কোন সার্ভারে লগইন/সেভ করছেন — লোকাল (localhost) নাকি লাইভ
+  // (softverseit.onrender.com) — সেটা চোখে দেখিয়ে দেওয়া হয়। এতে লোকাল
+  // panel-এ সেভ করে লাইভ সাইটে না আসার ভুলটা আর হয় না।
+  let serverBadge = '<span style="font-size:11px;font-weight:600;border:1px solid rgba(148,163,184,.4);border-radius:20px;padding:.22rem .6rem;color:#9db4d0;white-space:nowrap" id="serverBadge" title="সংযুক্ত সার্ভার — এই সার্ভারেই সেভ হয়">সংযুক্ত হচ্ছে…</span>';
+
   const initial = (admin.name || 'A').trim().charAt(0).toUpperCase();
 
   shell.innerHTML = `
@@ -198,6 +204,7 @@ function renderLayout(currentPage = '') {
           <h1 id="pageTitle"></h1>
         </div>
         <div class="top-right">
+          ${serverBadge}
           <a href="/" title="ওয়েবসাইটে যান" class="icon-btn" style="width:auto;padding:0 .7rem"><i class="fa-solid fa-house"></i> ওয়েবসাইট</a>
           <div class="admin-chip">
             <div class="av">${esc(initial)}</div>
@@ -218,6 +225,20 @@ function renderLayout(currentPage = '') {
     try { API.post('/api/auth/logout', {}).then(go, go); setTimeout(go, 1500); }
     catch (_) { go(); }
   });
+
+  // API base-এর hostname দিয়ে badge আপডেট
+  try {
+    API.apiBase().then(function (base) {
+      const el = document.getElementById('serverBadge');
+      if (!el) return;
+      let host = '';
+      try { host = new URL((base || location.origin)).host; } catch (_) { host = base || location.host || ''; }
+      const isLocal = /localhost|127\.0\.0\.1/.test(host);
+      el.textContent = (isLocal ? '🖥 লোকাল সার্ভার' : '🌐 লাইভ সার্ভার') + ' · ' + host;
+      if (isLocal) el.style.color = '#f0a35e';
+      else el.style.color = '#53d8a0';
+    }).catch(function () {});
+  } catch (_) {}
   const hbg = document.getElementById('hamburgerBtn');
   const side = document.getElementById('sidebar');
   const scrim = document.getElementById('sidebarScrim');

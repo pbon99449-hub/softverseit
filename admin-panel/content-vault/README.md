@@ -41,6 +41,9 @@ footer, popup) এর **কপি** লেখা হয়। এই ফোল�
    **🟢 GitHub auto-sync চালু** ব্যাজ দেখালেই বুঝবেন সব ঠিকঠাক।
 4. এখন থেকে **যতবার কনটেন্ট বদলাবেন, শুধু Save চাপুন** — GitHub-এ backup
    হয়ে যাবে। Render-এ redeploy-ত্তরও কনটেন্ট ঠিকই থাকবে।
+5. **লোকাল PC-তেও একই ৪টা ভেরিয়েবল** `admin-panel/.env`-এ বসিয়ে দিলে
+   লোকাল admin panel-এ Save চাপলেই সেটা GitHub-এ push হয়ে Render-এ
+   লাইভ হয়ে যাবে — কিছু চালাতে হবে না। (`.env.example`-এ লেখা আছে কী বসাবেন।)
 
 > টোকেন ছাড়া চললে (রিলিজ/লোকাল): Save-এর পরে project folder-এ
 > **`PUSH-CONTENT.bat`** চালান, তারপর redeploy করুন। এতে GitHub-এ

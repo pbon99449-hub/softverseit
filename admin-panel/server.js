@@ -49,6 +49,15 @@ app.use((req, res, next) => {
   next();
 });
 
+// ── Don't let browsers serve a stale JS/CSS file ──
+// JS/CSS-এও no-cache — যাতে ব্রাউজার পুরনো main.js ক্যাশ করে আটকে না রাখে।
+// (নাহলে দীর্ঘদিনের ক্যাশ করা পুরনো main.js-এর কারণে হোমপেজে সেভ করা
+// কনটেন্ট আসছে না বলে মনে হতে পারে।)
+app.use(['/JS', '/Css'], (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-cache');
+  next();
+});
+
 // ── Security headers ──
 // ব্রাউজার-সাইড সাধারণ আক্রমণ (MIME sniffing, clickjacking) ঠেকাতে।
 app.use((req, res, next) => {
