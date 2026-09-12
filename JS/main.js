@@ -619,7 +619,6 @@ window.addEventListener('storage', function (event) {
   }
 });
 
-renderTicker(tickerItems);
 setInterval(loadSiteContent, 2000);
 window.addEventListener('focus', loadSiteContent);
 loadSiteContent();
@@ -634,6 +633,34 @@ function renderTicker(items) {
     .map(item => `<span>${escapeHtml(item)}</span>`)
     .join('');
 }
+
+async function loadTickerContent() {
+  try {
+    const base = await siteApiBase();
+    const res = await fetch(base + '/api/site-content?_=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) throw new Error('ticker api failed');
+    const json = await res.json();
+    const data = normalizeSiteContent(json && json.data ? json.data : json);
+    renderTicker(data.ticker);
+    try { localStorage.setItem('sv_site_content_v1', JSON.stringify(data)); } catch (_) {}
+    return;
+  } catch (_) {
+    const vaultData = await loadSiteContentVault();
+    if (vaultData) {
+      renderTicker(vaultData.ticker);
+      return;
+    }
+    try {
+      const saved = JSON.parse(localStorage.getItem('sv_site_content_v1') || 'null');
+      if (saved && Array.isArray(saved.ticker)) renderTicker(saved.ticker);
+    } catch (_) {}
+  }
+}
+
+renderTicker(tickerItems);
+setInterval(loadTickerContent, 2000);
+window.addEventListener('focus', loadTickerContent);
+loadTickerContent();
 /* ── FOOTER — অ্যাডমিন প্যানেলের "ফুটার এডিট" পেজ থেকে রিয়েল-টাইমে আপডেট হয় ── */
 function renderFooter(footer) {
   const f = footer || {};
