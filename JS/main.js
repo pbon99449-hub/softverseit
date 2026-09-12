@@ -290,7 +290,9 @@ function normalizeSiteContent(data) {
   const reviews = Array.isArray(source.reviews) ? source.reviews : DEFAULT_SITE_CONTENT.reviews;
   const videos = Array.isArray(source.videos) ? source.videos : DEFAULT_SITE_CONTENT.videos;
   const gallery = Array.isArray(source.gallery) ? source.gallery : DEFAULT_SITE_CONTENT.gallery;
-  const ticker = Array.isArray(source.ticker) ? source.ticker : DEFAULT_SITE_CONTENT.ticker;
+  const ticker = Array.isArray(source.ticker)
+    ? source.ticker.map(item => String(item || '').trim()).filter(Boolean)
+    : DEFAULT_SITE_CONTENT.ticker;
   // ফাঁকা হলেও default লেখা দেখায় — কনটেন্ট রিসেট/অজানা হলে ব্যানারের
   // নিচের চিপটিও কখনো লুকানো থাকে না।
   const heroChip = (typeof source.heroChip === 'string' && source.heroChip.trim())
@@ -314,7 +316,7 @@ function normalizeSiteContent(data) {
       category: canonGalleryCat(item.category),
       src: item.src || '',
     })),
-    ticker: (ticker.length ? ticker : DEFAULT_SITE_CONTENT.ticker).map(item => String(item || '').trim()).filter(Boolean),
+    ticker,
     heroChip,
     footer,
   };
@@ -565,7 +567,7 @@ let freshServerDataLoaded = false;
 async function loadSiteContent() {
   try {
     const base = await siteApiBase();
-    const res = await fetch(base + '/api/site-content', { cache: 'no-store' });
+    const res = await fetch(base + '/api/site-content?_=' + Date.now(), { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed to load site content');
     const json = await res.json();
     const data = normalizeSiteContent(json && json.data ? json.data : json);
@@ -601,7 +603,7 @@ async function loadSiteContent() {
 async function loadSiteContentVault() {
   if (typeof location === 'undefined' || location.protocol === 'file:') return null;
   try {
-    const res = await fetch('/admin-panel/content-vault/site-content.json', { cache: 'no-store' });
+    const res = await fetch('/admin-panel/content-vault/site-content.json?_=' + Date.now(), { cache: 'no-store' });
     if (!res.ok) return null;
     const data = normalizeSiteContent(await res.json());
     try { localStorage.setItem('sv_site_content_v1', JSON.stringify(data)); } catch (_) {}
@@ -617,7 +619,9 @@ window.addEventListener('storage', function (event) {
   }
 });
 
+renderTicker(tickerItems);
 setInterval(loadSiteContent, 2000);
+window.addEventListener('focus', loadSiteContent);
 loadSiteContent();
 
 // Ticker — navbar-এর নিচের smooth auto-scroll। অ্যাডমিন প্যানেলের "হোম পেজ কনটেন্ট"
@@ -630,8 +634,6 @@ function renderTicker(items) {
     .map(item => `<span>${escapeHtml(item)}</span>`)
     .join('');
 }
-renderTicker(tickerItems);
-
 /* ── FOOTER — অ্যাডমিন প্যানেলের "ফুটার এডিট" পেজ থেকে রিয়েল-টাইমে আপডেট হয় ── */
 function renderFooter(footer) {
   const f = footer || {};
