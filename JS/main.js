@@ -617,7 +617,7 @@ window.addEventListener('storage', function (event) {
   }
 });
 
-setInterval(loadSiteContent, 10000);
+setInterval(loadSiteContent, 2000);
 loadSiteContent();
 
 // Ticker — navbar-এর নিচের smooth auto-scroll। অ্যাডমিন প্যানেলের "হোম পেজ কনটেন্ট"
