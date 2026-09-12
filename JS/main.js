@@ -381,7 +381,6 @@ async function renderSiteContent(content) {
   // আবার g-hidden হয়ে যেত এবং স্ট্যাট/ভিডিও এলিমেন্টের অ্যানিমেশনও রিসেট হতো।
   const contentSig = JSON.stringify(siteContent);
   if (contentSig === lastSiteContentSig) return;
-  lastSiteContentSig = contentSig;
 
   renderTicker(siteContent.ticker);
 
@@ -512,6 +511,8 @@ async function renderSiteContent(content) {
       });
     }
   }
+
+  lastSiteContentSig = contentSig;
 }
 
 // Resolve the API base: same-origin when the home page is served by the Node
@@ -585,9 +586,28 @@ async function loadSiteContent() {
     // সার্ভার এখন পৌঁছাচ্ছে না — স্ক্রিনে যা আছে (সর্বশেষ সফল সার্ভার ডাটা বা
     // প্রথম পেইন্টের ক্যাশ) সেটাই থাকবে; পুরনো ক্যাশ দিয়ে ওভাররাইট করা হয় না।
     if (!freshServerDataLoaded) {
+      const vaultData = await loadSiteContentVault();
+      if (vaultData) {
+        freshServerDataLoaded = true;
+        renderSiteContent(vaultData);
+        return;
+      }
       const saved = localStorage.getItem('sv_site_content_v1');
       if (!saved) renderSiteContent(DEFAULT_SITE_CONTENT);
     }
+  }
+}
+
+async function loadSiteContentVault() {
+  if (typeof location === 'undefined' || location.protocol === 'file:') return null;
+  try {
+    const res = await fetch('/admin-panel/content-vault/site-content.json', { cache: 'no-store' });
+    if (!res.ok) return null;
+    const data = normalizeSiteContent(await res.json());
+    try { localStorage.setItem('sv_site_content_v1', JSON.stringify(data)); } catch (_) {}
+    return data;
+  } catch (_) {
+    return null;
   }
 }
 
@@ -602,8 +622,8 @@ loadSiteContent();
 
 // Ticker — navbar-এর নিচের smooth auto-scroll। অ্যাডমিন প্যানেলের "হোম পেজ কনটেন্ট"
 // পেজ থেকে এডিট + সেভ করা যায় (site content-এর "ticker" ফিল্ড), রিয়েল-টাইমে আপডেট হয়।
-const tickerTrack = document.querySelector('.ticker-track');
 function renderTicker(items) {
+  const tickerTrack = document.querySelector('.ticker-track');
   if (!tickerTrack) return;
   const list = (Array.isArray(items) && items.length) ? items : tickerItems;
   tickerTrack.innerHTML = [...list, ...list]
