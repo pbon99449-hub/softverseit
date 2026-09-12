@@ -384,7 +384,7 @@ async function renderSiteContent(content) {
   const contentSig = JSON.stringify(siteContent);
   if (contentSig === lastSiteContentSig) return;
 
-  renderTicker(siteContent.ticker);
+  applyTicker(siteContent.ticker);
 
   renderFooter(siteContent.footer);
 
@@ -634,6 +634,19 @@ function renderTicker(items) {
     .join('');
 }
 
+let lastTickerSig = null;
+// একই টিকার বারবার এলে DOM নতুন করে লেখা হয় না — নাহলে প্রতি পোলে innerHTML
+// বদলায়ে CSS animation রিস্টার্ট হত আর স্ক্রল প্রতি ২ সেকেন্ডে আটকে/লাফাত।
+function applyTicker(items) {
+  const list = (Array.isArray(items) && items.length)
+    ? items.map((s) => String(s || '').trim()).filter(Boolean)
+    : tickerItems.slice();
+  const sig = JSON.stringify(list);
+  if (sig === lastTickerSig) return;
+  lastTickerSig = sig;
+  renderTicker(list);
+}
+
 async function loadTickerContent() {
   try {
     const base = await siteApiBase();
@@ -641,18 +654,18 @@ async function loadTickerContent() {
     if (!res.ok) throw new Error('ticker api failed');
     const json = await res.json();
     const data = normalizeSiteContent(json && json.data ? json.data : json);
-    renderTicker(data.ticker);
+    applyTicker(data.ticker);
     try { localStorage.setItem('sv_site_content_v1', JSON.stringify(data)); } catch (_) {}
     return;
   } catch (_) {
     const vaultData = await loadSiteContentVault();
     if (vaultData) {
-      renderTicker(vaultData.ticker);
+      applyTicker(vaultData.ticker);
       return;
     }
     try {
       const saved = JSON.parse(localStorage.getItem('sv_site_content_v1') || 'null');
-      if (saved && Array.isArray(saved.ticker)) renderTicker(saved.ticker);
+      if (saved && Array.isArray(saved.ticker)) applyTicker(saved.ticker);
     } catch (_) {}
   }
 }

@@ -82,10 +82,15 @@ app.use('/api/site-content', (req, res, next) => {
   const origJson = res.json;
   res.json = (body) => {
     if (req.method === 'PUT' && body && body.success) {
-      // সেভ সফল → vault ফাইল আপডেট, তারপর স্বয়ংক্রিয় GitHub push —
-      // ফলে admin panel-এ সেভ করা কনটেন্ট + ছবি স্থায়ী থাকে, কোনো
-      // ম্যানুয়াল কাজ ছাড়াই। (লোকাল PC-তে চলে; deployed server-এ skip হয়।)
-      contentVault.snapshotSiteContent()
+      // সেভ সফল → আটকে থাকা (হলে) rebase আগে সামলে → vault ফাইল আপডেট, তারপর
+      // স্বয়ংক্রিয় GitHub push — ফলে admin panel-এ সেভ করা কনটেন্ট + ছবি স্থায়ী থাকে,
+      // কোনো ম্যানুয়াল কাজ ছাড়াই। (লোকাল PC-তে চলে; deployed server-এ skip হয়।)
+      // ⚠️ recover আগে চলবে — abort করলে working tree-র vault ফাইল পুরনো হয়ে যেত,
+      // তাই snapshot অবশ্যই recovery-র পরে।
+      Promise.resolve()
+        .then(() => autoGitPush.recoverStuckRebase())
+        .catch(() => {})
+        .then(() => contentVault.snapshotSiteContent())
         .catch(() => {})
         .finally(() => autoGitPush.pushChanges('home page content save'));
     }

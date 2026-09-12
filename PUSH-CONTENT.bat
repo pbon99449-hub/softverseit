@@ -9,7 +9,8 @@ cd /d "%~dp0"
 
 git add -A
 git commit -m "content-vault update: home page content + gallery + latest changes"
-git push
+rem HEAD:master — detached HEAD/rebase state-eo push kaj korbe
+git push origin HEAD:master
 
 echo.
 echo ==============================================
