@@ -603,7 +603,7 @@ async function loadSiteContent() {
 async function loadSiteContentVault() {
   if (typeof location === 'undefined' || location.protocol === 'file:') return null;
   try {
-    const res = await fetch('/admin-panel/content-vault/site-content.json?_=' + Date.now(), { cache: 'no-store' });
+    const res = await fetch('/admin-panel/content-vault/site-content.json', { cache: 'no-store' });
     if (!res.ok) return null;
     const data = normalizeSiteContent(await res.json());
     try { localStorage.setItem('sv_site_content_v1', JSON.stringify(data)); } catch (_) {}
