@@ -1,1 +1,133 @@
-{"stats":[{"value":"9০০+","label":"সফল শিক্ষার্থী"},{"value":"৪+","label":"প্রফেশনাল কোর্স"},{"value":"২+","label":"বছরের অভিজ্ঞতা"},{"value":"100%","label":"শিক্ষার্থী সন্তুষ্টি"}],"reviews":[{"quote":"Softverse IT তে ক্লাস করে আমার কম্পিউটার নিয়ে বেসিক ধারণা এসেছে।","author":"(ব্যাচ ২৫)","stars":5},{"quote":"আমাদের স্যাররা খুবই বন্ধুপ্রতিম এবং অনুপ্রেরণাদায়ক।","author":"(ব্যাচ ২৬)","stars":5},{"quote":"বাস্তব অভিজ্ঞতার ওপর ক্লাস হওয়ায় খুব উপকার হয়েছে।","author":"(ব্যাচ ২৭)","stars":5}],"videos":[{"title":"Softverse It Rap Song","videoId":"0VEmSzp7ZQQ","thumbnail":"https://img.youtube.com/vi/0VEmSzp7ZQQ/maxresdefault.jpg"},{"title":"বেসিক কোর্স ব্যাচ","videoId":"PfhSGo4URak","thumbnail":"https://img.youtube.com/vi/PfhSGo4URak/maxresdefault.jpg"},{"title":"ক্যাম্পেইন রিভিউ","videoId":"0EVtuVKj_kw","thumbnail":"https://img.youtube.com/vi/0EVtuVKj_kw/maxresdefault.jpg"}],"gallery":[{"title":"ক্লাস রুম 2","category":"batch","src":"./Images/program pi/program4.webp"},{"title":"কলেজ ক্যাম্পেইন","category":"program","src":"./Images/program pi/campain.webp"},{"title":"ক্লাস রুম 1","category":"batch","src":"./Images/program pi/program3.webp"},{"title":"সার্টিফিকেট অনুষ্ঠান","category":"graduation","src":"./Images/program pi/program.webp"},{"title":"সার্টিফিকেট অনুষ্ঠান","category":"program","src":"./Images/program pi/program2.webp"},{"title":"ssss","category":"batch","src":"/Images/gallery/img_1788964479584_6cee72c3.jpg"}],"ticker":["ভর্তি চলছে —30 September , 2026 থেকে নতুন ব্যাচ শুরু","বেসিক কম্পিউটার · গ্রাফিক ডিজাইন · কিডস কম্পিউটার","যোগাযোগ করুন: 01679796976","মুন্সীগঞ্জ পুলিশ সুপার কার্যালয়ের বিপরীত পাশে","কোর্স শেষে সার্টিফিকেট প্রদান করা হয়"],"heroChip":"30 September — নতুন ব্যাচ শুরু","footer":{"about":"বিশ্বস্ত কম্পিউটার ট্রেনিং সেন্টার। আমরা বিগত ২০২৩ সাল ২+ বছর ধরে শত শিক্ষার্থীকে কম্পিউটার প্রশিক্ষন দিয়ে।","link1Title":"SV-Tech Zone","link1Url":"https://www.facebook.com/share/18QPiHwUnt/?mibextid=wwXIfr","link2Title":"SV-Advanture","link2Url":"https://www.facebook.com/share/1CVe7s24fR/?mibextid=wwXIfr","link3Title":"Gift Managment","link3Url":"#","address":"মুগন্সীঞ্জ পুলিশ সুপার কার্যালয় বিপরীত পাশে","phone":"016038-93912","email":"softversei@gmail.com","copyright":"© 2026 SoftVerse IT Computer Training Center।","facebookUrl":"https://www.facebook.com/share/15eAhfq3ayS/?mibextid=wwXIfr","youtubeUrl":"https://www.youtube.com/@SoftverseITInstitute"},"popup":{"badge":"ভর্তি চলছে এখনেই","headline":"4, 41 নাম্বার ব্যাচ","headlineHighlight":"এ ভর্তি চলছে","sub":"SoftVerse IT Training Center — ২০২৬","batchTitle":"ব্যাচ বিস্তারিত","startDate":"শুরুর তারিখ: 30 August, 2026","time":"সময়: সকাল / বিকেল / সন্ধ্যা ব্যাচ","place":"স্থান: মুন্সীগঞ্জ পুলিশ সুপার কার্যালয় বিপরীত পাশে","courses":"কোর্স: কম্পিউটার বেসিক, গ্রাফিক্স ডিজাইন, কিডস কম্পিউটার","enrollBtn":"এখনই আসন নিশ্চিত করুন →","skipBtn":"পরে দেখবো","enabled":true}}
+{
+  "stats": [
+    {
+      "value": "1000+",
+      "label": "সফল শিক্ষার্থী"
+    },
+    {
+      "value": "৪+",
+      "label": "প্রফেশনাল কোর্স"
+    },
+    {
+      "value": "২+",
+      "label": "বছরের অভিজ্ঞতা"
+    },
+    {
+      "value": "100%",
+      "label": "শিক্ষার্থী সন্তুষ্টি"
+    }
+  ],
+  "reviews": [
+    {
+      "quote": "Softverse IT তে ক্লাস করে আমার কম্পিউটার নিয়ে বেসিক ধারণা এসেছে।",
+      "author": "(ব্যাচ ২৫)",
+      "stars": 5
+    },
+    {
+      "quote": "আমাদের স্যাররা খুবই বন্ধুপ্রতিম এবং অনুপ্রেরণাদায়ক।",
+      "author": "(ব্যাচ ২৬)",
+      "stars": 5
+    },
+    {
+      "quote": "বাস্তব অভিজ্ঞতার ওপর ক্লাস হওয়ায় খুব উপকার হয়েছে।",
+      "author": "(ব্যাচ ২৭)",
+      "stars": 5
+    },
+    {
+      "quote": "onek valo",
+      "author": "20",
+      "stars": 5
+    }
+  ],
+  "videos": [
+    {
+      "title": "Softverse It Rap Song",
+      "videoId": "0VEmSzp7ZQQ",
+      "thumbnail": "https://img.youtube.com/vi/0VEmSzp7ZQQ/maxresdefault.jpg"
+    },
+    {
+      "title": "বেসিক কোর্স ব্যাচ",
+      "videoId": "PfhSGo4URak",
+      "thumbnail": "https://img.youtube.com/vi/PfhSGo4URak/maxresdefault.jpg"
+    },
+    {
+      "title": "ক্যাম্পেইন রিভিউ",
+      "videoId": "0EVtuVKj_kw",
+      "thumbnail": "https://img.youtube.com/vi/0EVtuVKj_kw/maxresdefault.jpg"
+    },
+    {
+      "title": "রাজা হলেন ভিখারি! মন্ত্রীর বাড়িতে ভিক্ষা চাইতে কেন গেলেন?",
+      "videoId": "7YaWlFI38OQ",
+      "thumbnail": "https://img.youtube.com/vi/7YaWlFI38OQ/maxresdefault.jpg"
+    }
+  ],
+  "gallery": [
+    {
+      "title": "ক্লাস রুম 2",
+      "category": "batch",
+      "src": "./Images/program pi/program4.webp"
+    },
+    {
+      "title": "কলেজ ক্যাম্পেইন",
+      "category": "program",
+      "src": "./Images/program pi/campain.webp"
+    },
+    {
+      "title": "ক্লাস রুম 1",
+      "category": "batch",
+      "src": "./Images/program pi/program3.webp"
+    },
+    {
+      "title": "সার্টিফিকেট অনুষ্ঠান",
+      "category": "graduation",
+      "src": "./Images/program pi/program.webp"
+    },
+    {
+      "title": "সার্টিফিকেট অনুষ্ঠান",
+      "category": "program",
+      "src": "./Images/program pi/program2.webp"
+    },
+    {
+      "title": "hi",
+      "category": "batch",
+      "src": "/Images/gallery/img_1789202267706_8883c6a2.jpg"
+    }
+  ],
+  "ticker": [
+    "ভর্তি চলছে — 30 September , 2026 থেকে নতুন ব্যাচ শুরু",
+    "বেসিক কম্পিউটার · গ্রাফিক ডিজাইন · কিডস কম্পিউটার",
+    "যোগাযোগ করুন: 01679796976",
+    "মুন্সীগঞ্জ পুলিশ সুপার কার্যালয়ের বিপরীত পাশে",
+    "কোর্স শেষে সার্টিফিকেট প্রদান করা হয়"
+  ],
+  "heroChip": "30 September — নতুন ব্যাচ শুরু",
+  "footer": {
+    "about": "বিশ্বস্ত কম্পিউটার ট্রেনিং সেন্টার। আমরা বিগত ২০২৩ সাল ২+ বছর ধরে শত শিক্ষার্থীকে কম্পিউটার প্রশিক্ষন দিয়ে।",
+    "link1Title": "SV-Tech Zone",
+    "link1Url": "https://www.facebook.com/share/18QPiHwUnt/?mibextid=wwXIfr",
+    "link2Title": "SV-Advanture",
+    "link2Url": "https://www.facebook.com/share/1CVe7s24fR/?mibextid=wwXIfr",
+    "link3Title": "Gift Managment",
+    "link3Url": "#",
+    "address": "মুগন্সীঞ্জ পুলিশ সুপার কার্যালয় বিপরীত পাশে",
+    "phone": "016038-93912",
+    "email": "softversei@gmail.com",
+    "copyright": "© 2026 SoftVerse IT Computer Training Center।",
+    "facebookUrl": "https://www.facebook.com/share/15eAhfq3ayS/?mibextid=wwXIfr",
+    "youtubeUrl": "https://www.youtube.com/@SoftverseITInstitute"
+  },
+  "popup": {
+    "badge": "ভর্তি চলছে এখনেই",
+    "headline": "4, 41 নাম্বার ব্যাচ",
+    "headlineHighlight": "এ ভর্তি চলছে",
+    "sub": "SoftVerse IT Training Center — ২০২৬",
+    "batchTitle": "ব্যাচ বিস্তারিত",
+    "startDate": "শুরুর তারিখ: 30 August, 2026",
+    "time": "সময়: সকাল / বিকেল / সন্ধ্যা ব্যাচ",
+    "place": "স্থান: মুন্সীগঞ্জ পুলিশ সুপার কার্যালয় বিপরীত পাশে",
+    "courses": "কোর্স: কম্পিউটার বেসিক, গ্রাফিক্স ডিজাইন, কিডস কম্পিউটার",
+    "enrollBtn": "এখনই আসন নিশ্চিত করুন →",
+    "skipBtn": "পরে দেখবো",
+    "enabled": true
+  }
+}
