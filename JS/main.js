@@ -521,7 +521,7 @@ async function renderSiteContent(content) {
 let siteApiBasePromise = null;
 function siteApiBase() {
   if (typeof location === 'undefined' || location.protocol === 'file:') {
-    return Promise.resolve('http://localhost:5000');
+    return probeSiteApiBases(['http://localhost:5000', 'http://127.0.0.1:5000']);
   }
   if (siteApiBasePromise) return siteApiBasePromise;
   siteApiBasePromise = (async () => {
@@ -530,9 +530,20 @@ function siteApiBase() {
       const j = await r.json().catch(() => null);
       if (r.ok && j && j.success) return '';
     } catch (_) { /* same origin has no API */ }
-    return 'http://localhost:5000';
+    return probeSiteApiBases(['http://localhost:5000', 'http://127.0.0.1:5000']);
   })();
   return siteApiBasePromise;
+}
+
+async function probeSiteApiBases(candidates) {
+  for (const base of candidates) {
+    try {
+      const r = await fetch(base + '/api/health', { cache: 'no-store' });
+      const j = await r.json().catch(() => null);
+      if (r.ok && j && j.success) return base;
+    } catch (_) { /* try the next local server name */ }
+  }
+  return candidates[0] || '';
 }
 
 /* সার্ভার থেকে অন্তত একবার সফল ডাটা এসেছে কিনা — এটা ট্র্যাক না করলে প্রতি ১০
